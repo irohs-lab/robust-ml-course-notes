@@ -1,0 +1,150 @@
+% -----------------------------*- LaTeX -*------------------------------
+\documentclass[11pt]{report}
+\usepackage{scribe_ds603}
+\begin{document}
+
+
+\scribe{Your name}		% required
+\lecturenumber{1}			% required, must be a number
+\lecturedate{Date}		% required, omit year
+
+\maketitle
+
+% ----------------------------------------------------------------------
+
+
+\section{My first section heading}
+%% A parametric nonlinear optimization problem %%
+Consider the following nonlinear constrained parametric optimization problem:
+\begin{align}
+        \label{appen:nlmpp}
+        \begin{aligned}
+            &\minimize_{\dcv \in \dcvset}  && f(\dcv,\param)\\
+            &\sbjto && \begin{cases}
+            g_i(\dcv,\param)=0 \quad i=1,\ldots,m_1,\\
+          g_i(\dcv,\param) \le 0\quad i=m_1+1,\ldots,m,
+            \end{cases}
+        \end{aligned}
+    \end{align}
+with the following data: 
+\begin{enumerate}[label=\textup{(\alph*)}, leftmargin=*, widest=b, align=left]
+\item \label{mpp:gen_a_0} \(\dcvset \subset \Rbb^n\) is open, \(\paramset\) is a metric space with the metric \(d_P\). The functions \(\dcvset \times \paramset \ni (\xi,\mu) \mapsto f(\xi,\mu) \in \Rbb\) and \(\dcvset \times \paramset \ni (\xi,\mu) \mapsto g_i(\xi,\mu) \in \Rbb\), \(i=1,\ldots,m\) are locally Lipschitz continuous; 
+
+\item \label{mpp:gen_a_1}  for all \(\param \in \paramset\) the functions \(\dcvset \ni \xi \mapsto f(\xi,\param) \in \Rbb\) and \(\dcvset \ni \xi \mapsto g_i(\xi,\param) \in \Rbb\), \(i=1,\ldots,m\) are \(\Ck{2}(\dcvset;\Rbb)\);
+
+ \item \label{mpp:gen_a_2} for \(i=1,\ldots,m\) the maps \(\frac{\partial}{\partial x} f(\cdot,\cdot)\) and \(\frac{\partial}{\partial x} g_i(\cdot,\cdot)\) are locally Lipschitz from \(\dcvset \times \paramset\) to \(\Rbb^n\), while the maps \(\frac{\partial^2}{\partial^2x}f(\cdot,\cdot)\), \(\frac{\partial^2}{\partial^2 x}g_i(\cdot,\cdot)\) are continuous;
+
+ \item \label{mpp:gen_a_3} \(m \Let m_1+m_2\), where \(m_1\) and \(m_2\) are nonnegative integers that corresponds to the dimension of the range-space of \(g(\dcv,\param)\); i.e., \(g(\dcv,\param) \in Q \subset \Rbb^m\) implies \(Q= \aset[]{0}^{m_1} \times \bigl(-\Rbb_{+}^{m_2}\bigr)\).
+ % use \Let when you're defining something as something 
+ \end{enumerate}
+\vspace{1mm}
+Let \(\bigl(\dcv,\param\bigr) \in \dcvset \times \paramset\). We define the \emph{active index set} as 
+\begin{align} \label{mpp:active_index_set}
+    J(\dcv,\param) \Let \aset[\big]{i \in \aset[]{m_1+1,\ldots,m} \suchthat g_i (\dcv,\param)=0}. 
+\end{align}
+The first order necessary conditions associated with the optimization problem are:
+\begin{equation}
+\label{mpp:first_order_cond} 
+    \begin{aligned}
+    \begin{cases}
+    \frac{\partial}{\partial x} f(\dcv,\param)+\sum_{i=1}^{m}\lambda_i \frac{\partial}{\partial x} g_i(\dcv,\param)=0, \\ g_i(\dcv,\param)=0, \,\, i=1,\ldots,m_1,  \\ g_i(\dcv,\param)\le 0,\, \lambda_i \ge 0, \, \lambda_i g_i(\dcv,\param)=0,\,i=m_1+1,\ldots,m,
+    \end{cases}
+\end{aligned}
+\end{equation}
+where the coefficient \(\lambda_i\) are the \emph{Lagrange multipliers}. Our primary concern is the pair \(\bigl(\dcv\as,\param\as\bigr) \in \dcvset \times \paramset\) such that \(\dcv\as\) is a local optimizer of \eqref{appen:nlmpp} and \(\dcv\as(\cdot)\) is Lipschitzian. To this end, here is a result asserting the same: 
+\begin{theorem}\label{ThmNeat}
+Consider the multiparametric nonlinear program \eqref{appen:nlmpp} with its associated data \eqref{mpp:gen_a_0}--\eqref{mpp:gen_a_3}, and let \(\bigl( \dcv\as,\param\as,\lambda\as \bigr) \in \dcvset \times \paramset \times \Rbb^m\) such that: 
+\begin{enumerate}[label=\(\circ\), leftmargin=*, widest=b, align=left]
+\item \label{mpp:reg:thrm:c1} the vectors \(\frac{\partial}{\partial x} g_i( \dcv\as,\param\as)\), \(i \in \aset[]{1,\ldots,m_1} \cup J( \dcv\as,\param\as)\) are linearly independent; 
+\item \label{mpp:reg:thrm:c2} for all \(0 \neq b \in \Rbb^n\) such that \(\inprod{\frac{\partial}{\partial x} f (\dcv\as,\param\as)}{b}=0\) and \(\inprod{\frac{\partial}{\partial x} g_i(\dcv\as,\param\as)}{b}=0\), \(i \in \aset[]{1,\ldots,m_1}\cup \aset[]{i \in J(\dcv\as,\param\as)\mid \lambda_i\as>0}\), the following hold:
+\begin{align}
+    \inprod{ \biggl( \frac{\partial^2}{\partial^2 x}f(\dcv\as,\param\as)+\sum_{i=1}^{m} \lambda_i\as \frac{\partial^2}{\partial^2 x}g_i(\dcv\as,\param\as)\biggr)b }{b}>0. \nn
+\end{align}
+\end{enumerate}
+If \(\bigl( \dcv\as,\param\as,\lambda\as\bigr)\) satisfies the first-order conditions \eqref{mpp:first_order_cond}, then there exist neighbourhoods \(\dcvset_0\), \(V_0\) of \(\dcv\as\) and \(\param\as\) in \(\dcvset\) and in \(\paramset\), respectively and mappings \(\dcv:V_0 \lra \dcvset_0\), \(\lambda:V_0 \lra \Rbb^m\) such that \(\dcv(\cdot)\) and \(\lambda(\cdot)\) are Lipschitzian and \(\dcv(\param\as)=\dcv\as\), and \(\lambda(\param\as)= \lambda\as\).
+\end{theorem}
+
+\begin{proof}
+For a proof we refer the readers to \cite[Corollary 2.3]{ref:cornet1986lipschitzian}.
+\end{proof}
+
+
+\subsection{A subsection heading}
+
+Regarding macros: most of the mathematical symbols like sets, functions, operations etc are all defined in the sty file. Please use them, for example do not write:
+\begin{align}
+\mathbb{R}^d, \mathbb{Q}, \mathcal{C}^2, C, x, \text{min}, \text{subject to}, e^{2x^2}, \| x\|, \langle x, y \rangle, f: X \rightarrow Y, \nabla, \nabla^2 \nn 
+\end{align}
+All of these are already predefined in the sty file, use these instead:
+\begin{align}
+\Rbb^d, \Q, \Ck{2}, \dcvset, \dcv, \minimize, \sbjto, \epower{2x^2}, \norm{x}, \inprod{x}{y}, f:X \ra Y, \Jacobian, \Hessian \nn 
+\end{align}
+% \nn is for \nonumber (supressing the equation number)
+Here is how to typeset an array of equations.
+
+\begin{eqnarray}
+	x & = & y + z \\
+%
+     \alpha & = & \frac{\beta}{\gamma}
+\end{eqnarray}
+
+
+And a table.
+
+\begin{table}[h]
+\centerline{
+    \begin{tabular}{c|cc}
+	\hline
+	\textbf{Method} & Cost & Iterations \\
+	\hline
+	Naive descent       & 12 & 200 \\
+	Newton's method & 500 & 30 \\
+	\hline
+    \end{tabular}}
+\caption{Comparison of different methods.}
+\end{table}
+
+
+
+\subsection{Yet another subsection}
+
+
+\begin{corollary}
+\label{CorThmNeat}
+A corollary of Theorem~\ref{ThmNeat}.
+\qed
+\end{corollary}
+
+
+\begin{algorithm2e}[!ht]
+\DontPrintSemicolon
+\SetKwInOut{ini}{Initialize}
+\SetKwInOut{giv}{Data}
+\SetKwInOut{out}{Output}
+\giv{\(u_0\) }
+\ini{Lipschitz constant \(L\) of \(u_0\)}
+\While{the function \(u_0\in \Sbb\)}
+    {
+    Do something \\
+       
+    continue   
+    }
+\ElseIf{\(u_0 \notin \Sbb\)}
+    {
+    Do something else.
+    }
+  \out{job done!}  
+\caption{Some Algorithm}
+\label{alg:some_algo}
+\end{algorithm2e}
+
+% Optional, if you want to make a comment about vulnerability of any result or so on.
+%\begin{danger}
+%This is the danger environment.
+%\end{danger}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
+
