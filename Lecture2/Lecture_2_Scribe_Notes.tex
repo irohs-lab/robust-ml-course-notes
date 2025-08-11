@@ -1,0 +1,410 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm} 
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{tcolorbox}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{tikz} 
+\usetikzlibrary{arrows.meta,calc,positioning}
+\usepackage{graphicx}   
+\graphicspath{{./}{images/}}   
+
+
+
+
+\bibliographystyle{plain}
+\renewcommand{\refname}{Bibliography}
+
+% --- Theorem ---
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section] 
+
+% page geometry
+\geometry{a4paper, margin=1in}
+
+% --- Header and Footer---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textbf{DS603}}
+\fancyhead[C]{\textbf{Lecture 2 -- 01/08/2025}}
+\fancyhead[R]{\textbf{Autumn 2025}}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyfoot[C]{2-\thepage}
+
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \fancyfoot[C]{2-\thepage}%
+}
+
+\setcounter{secnumdepth}{3}
+
+\titleformat{\subsection}
+  {\Large\bfseries}
+  {\thesubsection}
+  {1em}
+  {}
+
+\titleformat{\subsubsection}[block]
+  {\normalsize\bfseries}
+  {\thesubsubsection}
+  {1em}
+  {}  
+
+\renewcommand{\thesubsection}{2.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{2.\arabic{subsection}.\arabic{subsubsection}}
+
+
+
+\begin{document}
+
+\thispagestyle{plain}
+
+\begin{tcolorbox}[colback=white, colframe=black, boxrule=1pt, sharp corners]
+\textbf{DS603: Robust Machine Learning} \hfill \textbf{Autumn 2025}
+\begin{center}
+\vspace{2mm}
+Lecture 2 -- 01/08/2025
+\end{center}
+\vspace{2mm}
+\noindent\textit{Lecturer: Arjun Bhagoji \hfill Scribe: Akshaj Aithal, Rahul Kumar Yadav}
+\end{tcolorbox}
+
+\subsection{Under what condition on the surrogate loss \& hypothesis class is \textit{efficient learning} possible?}
+
+\subsubsection{ Convexity}\label{sec:Convexity}
+    \item $H$ must be a convex set \Rightarrow $\forall h, h',\alpha h + (1-\alpha)h'$ \in $H$. 
+    \item $l(h,z)$ \text{must be a convex function in } $h$ \\ \Rightarrow $\forall z, l(\alpha h+(1-\alpha)h',z) \leq \alpha l(h,z) + (1-\alpha)l(h',z)$
+
+\small{Note: Implicitly treating $H\subset\mathbb{R}^d$ \& $h\in \mathbb{R}^d$}
+
+\subsubsection{Boundedness}\label{sec:Boundedness}
+We say a function is bounded if there exists a real number $B > 0$, such that:-
+$\forall h \in H$, $\lvert\lvert h \rvert\rvert_2 \leq B$
+
+\subsubsection{Lipschitzness}\label{sec:Lipschitzness}
+We say a function $l$ to be lipschitz continuous if, 
+$\forall z,h,h', \lvert\lvert l(z,h) - l(z,h') \rvert\rvert \leq \rho\lvert\lvert h-h'\rvert\rvert \\
+\Rightarrow \lvert\lvert\nabla l(z,h)\rvert\rvert \leq \rho$ where ${z,h}$ and ${z, h'}$ \in \text{the domain of function $l$, i.e., the gradient of function can't be infinite.} 
+\subsubsection{Smoothness}\label{sec:Smoothness}
+We say a function $l$ to be smooth if,
+$\forall z,h,h' \lvert\lvert \nabla l(z,h) - \nabla l(z,h')\rvert\rvert \leq \beta\lvert\lvert h-h'\rvert\rvert$ where ${z,h}$ and ${z, h'}$ \in \text{the domain of function }$l$, and $\beta$ is some constant.
+
+% refine paragraph below
+With convex sets that satisfy ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Lipschitzness}, or  ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Smoothness} we get problems that are learnable and usually efficient.
+
+\small{Note: There exists convex sets that satisfy ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Lipschitzness} that are not efficiently learnable.}
+
+\subsection{Optimizing over Vector Spaces}
+Let $\vec{\theta}\in\mathbb{R}^d$ and let $f:H\to\mathbb{R}$. We want to minimize $f(\vec{\theta})$ over
+\[
+  H \;=\; \bigl\{\vec{\theta}\in\mathbb{R}^d : \lVert \vec{\theta}\rVert_2 \le B \bigr\}.
+\]
+Additionally, assume that $f$ is convex and $L$-Lipschitz; for simplicity, also assume that $f$ is differentiable.
+
+\smallskip
+\noindent\textit{Note:} Convex functions always admit subgradients but need not be differentiable everywhere. We gloss over this for simplicity.
+
+
+\subsubsection{Subgradient Lemma}
+\textbf{Lemma:}  
+Let $H \subseteq \mathbb{R}^d$ be a convex set and $f : H \to \mathbb{R}$ be a convex function.  
+Then, for any $\vec{\theta}_1, \vec{\theta}_2 \in H$ and any subgradient $g \in \partial f(\vec{\theta}_2)$, we have
+\[
+    f(\vec{\theta}_1) - f(\vec{\theta}_2) \;\le\; g^\top \big(\vec{\theta}_1 - \vec{\theta}_2\big).
+\]
+Here:
+\begin{itemize}
+    \item $\vec{\theta}_1, \vec{\theta}_2 \in H$ are two points in the domain of $f$.
+    \item $f : H \to \mathbb{R}$ is a convex function.
+    \item $g \in \partial f(\vec{\theta}_2)$ is a subgradient of $f$ at $\vec{\theta}_2$ (i.e., $g$ satisfies the subgradient inequality above).
+\end{itemize}
+
+If $f$ is differentiable at $\vec{\theta}_2$, then the subdifferential $\partial f(\vec{\theta}_2)$ is the singleton $\{\nabla f(\vec{\theta}_2)\}$, and the lemma becomes:
+\[
+    f(\vec{\theta}_1) - f(\vec{\theta}_2) \;\le\; \nabla f(\vec{\theta}_2)^\top \big(\vec{\theta}_1 - \vec{\theta}_2\big).
+\]
+
+
+The key question arises is how do we optimize a convex-bounded Lipschitz function?
+
+\subsection{Projection Lemma}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{DS 603 diagram 001.png}
+    \caption{Projection Lemma}
+    \label{fig:placeholder}
+\end{figure}
+
+\[
+\lvert\lvert\vec{a}\rvert\rvert^2 + \lvert\lvert\vec{b}\rvert\rvert^2 \leq \lvert\lvert \omega -\theta\rvert\rvert^2
+\]
+
+\subsubsection{Projected Gradient Descent}
+Projected Gradient Descent (PGD) is an iterative optimization method for constrained problems of the form 
+\[
+    \min_{\vec{\theta} \in H} f(\vec{\theta}),
+\]
+where $H \subseteq \mathbb{R}^d$ is a convex feasible set.  
+Starting from an initial point $\vec{\theta}_0 \in H$, the update rule is
+\[
+    \vec{\omega}_{t+1} = \vec{\theta}_t - \eta \, \nabla f(\vec{\theta}_t),
+\]
+\[
+    \vec{\theta}_{t+1} = \Pi_H\big(\vec{\omega}_{t+1}\big),
+\]
+where $\eta > 0$ is the step size and $\Pi_H(\cdot)$ denotes the Euclidean projection onto $H$, defined as
+\[
+    \Pi_H(\vec{x}) = \arg\min_{\vec{y} \in H} \; \lVert \vec{y} - \vec{x} \rVert_2.
+\]
+The projection step ensures that $\vec{\theta}_{t+1}$ remains in $H$ by projecting any infeasible point $\vec{\omega}_{t+1} \notin H$ back to the closest point in $H$ in terms of Euclidean distance.
+
+\begin{theorem}
+Using $\eta = \frac{B}{\rho \sqrt{T}}$, where $\rho$ is the Lipschitz constant of $f$ and $\vec{\theta}^*$ its minimizer in $H$, we have
+\[
+    f\!\left( \frac{1}{T} \sum_{t=1}^T \vec{\theta}_t \right) - f(\vec{\theta}^*) \;\le\; \frac{B\rho}{\sqrt{T}}.
+\]
+\end{theorem}
+
+\begin{proof}
+\textbf{Subgradient lemma at $\theta_t$.}
+By convexity (subgradient inequality with $g_t=\nabla f(\theta_t)\in\partial f(\theta_t)$),
+\[
+f(\theta_t)-f(\theta^*) \;\le\; g_t^{\top}(\theta_t-\theta^*).
+\]
+
+\textbf{(Three-point identity.}
+Using the elementary identity
+\[
+2a^{\top}b=\|a\|_2^2+\|b\|_2^2-\|a-b\|_2^2
+\]
+with $a=\theta_t-\theta^*$ and $b=\theta_t-\omega_{t+1}=\eta g_t$, we get
+\[
+g_t^{\top}(\theta_t-\theta^*)
+=\frac{1}{2\eta}\!\left(\|\theta_t-\theta^*\|_2^2-\|\omega_{t+1}-\theta^*\|_2^2\right)
++\frac{\eta}{2}\,\|g_t\|_2^2.
+\]
+
+\textbf{Nonexpansiveness of projection.}
+Since Euclidean projection is nonexpansive and $\theta^*\in H$,
+\(
+\|\omega_{t+1}-\theta^*\|_2 \ge \|\theta_{t+1}-\theta^*\|_2.
+\)
+Hence
+\[
+f(\theta_t)-f(\theta^*) \;\le\;
+\frac{1}{2\eta}\!\left(\|\theta_t-\theta^*\|_2^2-\|\theta_{t+1}-\theta^*\|_2^2\right)
++\frac{\eta}{2}\,\|g_t\|_2^2.
+\]
+
+\textbf{Sum and telescope.}
+Summing $t=1$ to $T$ and using $\|g_t\|_2\le \rho$,
+\[
+\sum_{t=1}^T \bigl(f(\theta_t)-f(\theta^*)\bigr)
+\;\le\; \frac{\|\theta_1-\theta^*\|_2^2}{2\eta} \;+\; \frac{\eta\rho^2 T}{2}.
+\]
+Because $\theta_1,\theta^*\in H$ and $H$ is the radius-$B$ ball, we have $\|\theta_1-\theta^*\|_2\le B$ (after translating so that the ball is centered at $\theta^*$; equivalently, take $R=\sup_{\theta\in H}\|\theta-\theta^*\|\,$ and set $R=B$). Thus
+\[
+\sum_{t=1}^T \bigl(f(\theta_t)-f(\theta^*)\bigr)
+\;\le\; \frac{B^2}{2\eta} \;+\; \frac{\eta\rho^2 T}{2}.
+\]
+
+\textbf{Average and choose $\eta$.}
+By convexity of $f$,
+\(
+f\!\left(\frac1T\sum_{t=1}^T\theta_t\right)\le \frac1T\sum_{t=1}^T f(\theta_t).
+\)
+Divide the previous inequality by $T$ and take
+\(\eta=\frac{B}{\rho\sqrt{T}}\):
+\[
+f\!\left(\frac1T\sum_{t=1}^T\theta_t\right)-f(\theta^*)
+\;\le\; \frac{B^2}{2\eta T}+\frac{\eta\rho^2}{2}
+\;=\; \frac{B\rho}{2\sqrt{T}}+\frac{B\rho}{2\sqrt{T}}
+\;=\; \frac{B\rho}{\sqrt{T}}.
+\]
+\end{proof}
+
+\small{Note:The rate is dimension independant.}
+
+The key question which now arises is how we can use gradient descent for learning?
+
+\subsection{Learning with Gradient Descent}
+
+\underline{Option 1}:
+\[
+f(\vec{\theta}) = \frac{1}{n} \sum_{i=1}^{n} l(\vec{z}_i, \vec{\theta}) = \hat{L}(\vec{\theta})
+\]
+\\
+\underline{Option 2}:
+\[
+f(\vec{\theta}) = \mathbb{E}_{\vec{z} \sim p^*} \left[ l(\vec{z}, \vec{\theta}) \right] = L(\vec{\theta})
+\]\\
+
+In Option 2, we do not have access to the full distribution, so we use (fresh) random samples.
+
+\subsection{Stochastic Gradient Descent}
+In SGD, we don't do gradient descent over all of the dataset, rather we use only some datapoints for the process of updation, and hence $\vec{z}_t$
+For $t = 1, \dots, T$, sample $\vec{z}_t \sim p^*$.  
+Then,
+\[
+\vec{\omega}_{t+1} = \vec{\theta}_t - \eta \, \nabla_\theta l(\vec{z}_t, \vec{\theta}_t),
+\]
+\[
+\vec{\theta}_{t+1} = \Pi_H(\vec{\omega}_{t+1}).
+\]
+
+\begin{theorem}
+If $\eta = \frac{B}{\rho \sqrt{T}}$, then
+\[
+\mathbb{E}_{\{\vec{z}_t\}_{t=1}^T} \left[ L\!\left( \frac{1}{T} \sum_{t=1}^T \vec{\theta}_t \right) \right]
+- L(\vec{\theta}^*)
+\;\le\; \frac{B\rho}{\sqrt{T}}.
+\]
+\end{theorem}
+
+\noindent\textbf{Note:} This is effectively a new learning paradigm, but it needs fresh samples at each step.  
+Otherwise, the underlying assumption that the stochastic gradient is an unbiased estimator of the loss does not hold.
+
+\medskip
+\noindent\textit{Why is this true?}  
+In Option 1, we can make as many passes over the data as we wish.
+
+\subsection{Vacuous Bounds in Statistical Learning Theory}
+
+In classical Statistical Learning Theory (SLT), the \textit{fundamental theorem of statistical learning} states that to guarantee generalization within error $\varepsilon$ with high probability, it suffices to have
+\[
+m \;\gtrsim\; \frac{\log |\mathcal{H}|}{\varepsilon^2},
+\]
+where $m$ is the number of training samples and $\mathcal{H}$ is the hypothesis class.
+
+\subsubsection*{A High-Dimensional Example}
+Let $\vec{\theta} \in \mathbb{R}^d$, and assume each coordinate is represented with $32$ bits. Then the number of possible parameter configurations is
+\[
+|\mathcal{H}| = \left( 2^{32} \right)^{d}.
+\]
+Taking logarithms,
+\[
+\log |\mathcal{H}| = 32\,d.
+\]
+The sample complexity bound becomes
+\[
+m \;\gtrsim\; \frac{32\,d}{\varepsilon^2}.
+\]
+For large $d$ (as in modern deep networks), this bound predicts an astronomically large $m$, often much larger than what is available in practice.
+
+\subsubsection*{Why the Bound is Vacuous}
+In modern machine learning the number of training samples needed to get low test error is much smaller than that predicted by the fundamental theorem of statistical learning, thus, the bound on number of samples is of not much help to us! Thus, we need new theoretical approaches to understand how learning happens in the case of neural networks.
+
+\subsection{Double Descent}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{DoubleDescent.png}
+  \caption{Double descent: test risk (solid) and training risk (dashed) as model capacity increases.}
+  \label{fig:double-descent}
+\end{figure}
+
+The \textit{double descent} phenomenon describes a relationship between model complexity and generalization error. 
+In the classical case, there is something called as bias--variance tradeoff in which test error decreases as complexity of the model increases until it reaches an optimal point, after which it starts to increase due to overfitting.
+However, a newer kind of phenomenon in modern overparameterized models (e.g., deep neural networks) is observed, in which, increasing complexity beyond the interpolation threshold, where the model fits the training data exactly can lead to a second regime where test error decreases again. 
+
+
+\subsection{Unsupervised Learning \& Anomaly Detection}
+
+\subsubsection{Assumptions in Traditional Supervised Learning}
+\begin{enumerate}
+  \item \textbf{Labeled data available:} training examples $(x_i,y_i)$ are provided.
+  \item \textbf{Train--test i.i.d.:} both sets are drawn from the same distribution
+  \[
+    (x,y)\sim P_{\text{train}}=P_{\text{test}}.
+  \]
+  \textit{Remark:} When this fails, we study distributionally robust optimization and domain adaptation to handle covariate shift, concept drift, label shift, etc.).
+\end{enumerate}
+
+\subsubsection{Unsupervised Learning}
+We observe unlabeled samples
+\[
+  \{x_i\}_{i=1}^n \stackrel{\text{i.i.d.}}{\sim} P^{+}\ \text{on}\ \mathcal X,
+\]
+and no labels are provided.
+
+\subsubsection{Anomaly Detection}
+\paragraph{Basic problem.}
+Given a new point $\tilde x$, decide whether it is \emph{in-distribution} (i.e., typical of $P^{+}$).
+If $P^{+}$ has a probability density function, then we chose a threshold $\tau\ge 0$ and define the anomaly set as
+\[
+  \mathcal A := \{x\in\mathcal X \;:\; p^{+}(x)\le \tau\}.
+\]
+
+\subsubsection{Challenges}
+\begin{enumerate}
+  \item Modeling $P^{+}$ is hard. Misspecification leads to errors:
+  \[
+    \text{FPR}=\Pr_{x\sim P^{t}}[\hat y(x)=\text{anomaly}],\quad
+    \text{FNR}=\Pr_{x\sim P^{\text{anom}}}[\hat y(x)=\text{normal}].
+  \]
+  High complexity of $P^{+}$ can cause either large FPR (typical $x\sim P^{+}$ wrongly flagged) or large FNR (true anomalies missed).
+  \item Anomalies may come from arbitrary, heterogeneous distributions $\{P^{i}\}$ (one or many) and are rare.
+\end{enumerate}
+
+\subsubsection{Model of Normality}
+Since we have samples from $P^{
++
+}$, we try to model \emph{normality} directly and treat all training examples as label $1$ (normal).
+\paragraph{Notes on terminology.}
+The terms \emph{anomaly}, \emph{novelty}, and \emph{outlier} are used differently across fields:
+\begin{itemize}
+  \item \textbf{Anomaly:} out-of-support/semantically different (e.g., a \emph{dog} when $P^{+}$ is cats).
+  \item \textbf{Outlier:} a rare/extreme point from $P^{+}$ (e.g., a rare breed of cat far in the tail).
+  \item \textbf{Novelty:} previously unseen but related subpopulation.(e.g., a new cat breed).
+\end{itemize}
+
+\subsubsection{Contamination}
+\begin{enumerate}
+  \item \textbf{Question.} How do we know all observed examples truly come from $P^{+}$? What if there is noise or corruption?
+  \item \textbf{More general model (Huber $\varepsilon$-contamination).}
+  \[
+    x_i \sim (1-\varepsilon)\,P^{+} \;+\; \varepsilon\,Q\;+\;noise,\qquad 0\le \varepsilon<1,
+  \]
+  where $Q$ is an arbitrary (adversarial or unknown) distribution.
+\end{enumerate}
+
+\subsubsection{Other Unsupervised Learning Methods}
+Below are some methods which we can use to look for the anomalies:-
+\begin{enumerate}
+  \item \textbf{Clustering:} k-means.
+  \item \textbf{Reconstruction-based:} PCA, Autoencoders.
+\end{enumerate}
+
+
+
+\begin{thebibliography}{99}
+
+\bibitem{ShalevShwartzUnderstandingML}
+Shai Shalev-Shwartz and Shai Ben-David.
+\newblock \emph{Understanding Machine Learning: From Theory to Algorithms}.
+\newblock Cambridge University Press, 2014.
+
+\bibitem{LiangStatsLearnNotes}
+Percy Liang.
+\newblock \emph{Statistical Learning Theory Notes}.
+\newblock Stanford University, 2023.
+\newblock Available at \url{https://web.stanford.edu/~pliang/cs229/}.
+
+\bibitem{Salehi, M., Mirzaei, H., Hendrycks, D., Li, Y., Rohban, M. H., & Sabokrou, M. (2021). A Unified Survey on Anomaly, Novelty, Open-Set, and Out-of-Distribution Detection: Solutions and Future Challenges.}
+\newblock \emph{Salehi, M., Mirzaei, H., Hendrycks, D., Li, Y., Rohban, M. H., & Sabokrou, M. (2021). A Unified Survey on Anomaly, Novelty, Open-Set, and Out-of-Distribution Detection: Solutions and Future Challenges.}
+\newblock ArXiv. \url{https://arxiv.org/abs/2110.14051}
+
+\bibitem{Convex Optimization: Algorithms and Complexity — Sébastien Bubeck (2015 lecture notes)}
+\newblock \emph{Convex Optimization: Algorithms and Complexity — Sébastien Bubeck (2015 lecture notes)}
+
+
+\end{thebibliography}
+
+\end{document}
