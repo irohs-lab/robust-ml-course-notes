@@ -1,0 +1,198 @@
+% -----------------------------*- LaTeX -*------------------------------
+\documentclass[11pt]{report}
+\usepackage{scribe_ds603}
+\begin{document}
+
+
+
+
+\scribe{Aditya Agrawal}		% required
+\lecturenumber{5}			% required, must be a number
+\lecturedate{13/08}		% required, omit year
+
+
+\maketitle
+
+
+% ----------------------------------------------------------------------
+
+\section{Input Representations}
+
+We start off by looking at whether the way we represent data for classification good enough?
+\vspace{1mm}
+\\A \emph{feature map} \(\phi :\Rbb^d \ra \Rbb^p\) is simply a map which maps the input data into another space known as the \emph{feature} or \emph{embedding} space. 
+\vspace{1mm}
+\\The k-class classification problem asks for a \emph{map} \(f: X \ra [0,1]^k\) to denote \emph{confidence} of a particular input lying in some class.
+\vspace{1mm}
+\\The standard classification algorithms directly operate on the input data while \emph{representational learning} first maps raw data into \emph{feature space} on which standard algorithms are applied. Representational learning is generally of two types:
+
+\begin{enumerate}[label=\textup{(\alph*)}, leftmargin=*, widest=b, align=left]
+
+
+
+\item \label{mpp:gen_a_0} \emph{Fixed} representations: These are explicit maps which are used on basis on some prior knowledge of data distribution
+\item \label{mpp:gen_a_1} \emph{Learned} representations: These are maps which are \emph{learnt} through Neural Networks, or other such techniques
+
+ \end{enumerate}
+ \vspace{1mm}
+A \emph{kernel} is defined as a dot product in feature space:
+\begin{align}
+    \begin{aligned}
+     &k: X \times X \ra \Rbb && k(x,x')=\inprod{\phi(x)}{\phi(x')} \nn
+    \end{aligned}   
+\end{align}
+The standard dot product arises when we use the linear feature map \(\phi(x)=x\).
+\subsection{Feature maps from kernels}
+We ask the question of when do arbitrary kernel functions arise as a dot product between some feature vectors.
+\begin{theorem}
+If \(k(x,x')\) is real valued and positive semi definite, then there exists an inner product space \(\mathcal{X}\) and feature map \(\phi: \Rbb^d \ra \mathcal{X}\) such that \(k(x,x')=\inprod{\phi(x)}{\phi(x')}\)
+\end{theorem}
+\vspace{1mm}
+We simply define \(\mathcal{X}\) as the set of all maps \(f: \Rbb^d \ra \Rbb\) with an appropriate inner product and the feature map \(\phi: \Rbb^d \ra \mathcal{X}\) as \(\phi(x)(.)=k(x,.)\).
+We also have to validate the existence of the inner product on the function space but the positive semi definiteness of the product will allow us to do so.
+
+\subsection{Examples of Kernels}
+
+\begin{enumerate}[label=\textup{(\alph*)}, leftmargin=*, widest=b, align=left]
+
+
+
+\item \label{mpp:gen_a_0} Polynomial Kernels : \(k(x,x')= \inprod{x}{x'}^d\)
+\item \label{mpp:gen_a_1} Gaussian Kernels : \(k(x,x')=\epower{-\norm{x-x'}^2/2\sigma^2}\)
+ \end{enumerate}
+
+
+\subsection{The Kernel Trick}
+Well, the representations we dealt with earlier either fixed or learned were into finite dimensional spaces. But fortunately, in all our optimization equations, the mentions of \(\phi(x)\) were all as dot products of the form \(\phi(x)^T\phi(x')\), which can instead be replaced by \(\tilde{k}(x,x')\) leading to a feature map \(\tilde{\phi} : \tilde{\phi}(x)(.)=\tilde{k}(x,.)\) where this feature map could be infinite dimensional!!
+
+\section{Anomaly Detection}
+We come back to the original question of anomaly detection and propose another method.
+\subsection{One Class SVM}
+Consider the following constrained parametric optimization problem:
+\begin{align}
+        \label{appen:nlmpp}
+        \begin{aligned}
+            &\minimize_{w,\gamma,\rho}  && \frac{1}{2}\norm{w}^2+\frac{1}{\nu n}(\sum_{i=1}^{n}\gamma_{i})  - \rho\\
+            &\sbjto && \begin{cases}
+            \inprod{w}{\phi(x_i)} \geq \rho - \gamma_i \quad i=1,\ldots,n,\\
+           \gamma_i \geq 0 \quad i=1,\ldots,n,
+            \end{cases}
+        \end{aligned} \nn
+    \end{align}
+where \(\nu\) is a hyperparameter which asymptotically represents the fraction of anomalies.
+\vspace{1mm}
+At test time, we define the hypothesis maps \(f,h\) as the following:
+
+\begin{align}
+        \begin{aligned}
+            & f_\theta(x)=\inprod{w}{\phi(x_i)} - \rho\\
+            & h_\theta(x)=sgn(f_\theta(x))
+        \end{aligned} \nn
+    \end{align}
+\textbf{Note:} Finally, the map \(h\) is the one which maps the input into a class \(0\) or \(1\) where 0 indicates an anomaly.
+\subsection{HW Problems}
+\begin{enumerate}
+    \item Derive the primal optimization problem of the \emph{lagrangian} of a standard one class SVM machine for both the soft and the hard cases using the KKT conditions
+    \item Derive the same for the \(\nu\)-SVM as well
+    \item Derive the dual of these primal objective functions as well
+\end{enumerate}
+
+\subsection{SLT- like Guarantees on the One Class SVM}
+\begin{theorem}
+    (informally) Let \(R_{w,\gamma}=\{x | f_\theta(x) \geq 0\}\). Then for all \(\delta > 0 \), with probability \(1- \delta\) over the draws \(\{x_i\}_{i=1}^n\), for any \(B >0\), we get
+    \begin{align}
+        \underset{x \sim \mathbb{P}^+}{\mathbb{P}} [x | x \notin R_{w,\rho-B}] \leq \frac{2}{n}\left( k(n,B,\norm{W},\rho) + \log_2(\frac{n^2}{2\delta}) \right) \nn
+    \end{align}
+\end{theorem}
+where \(k\) is some non-negative function of problem parameters
+
+
+\section{OOD Detection}
+The OOD problem or the \emph{Out Of Distribution} problem is the supervised case of the anomaly detection problem where we are now also provided labels on the input draws. Our key question is to understand how OOD detection is done nowadays.
+
+\subsection{Deep OCSVM or Deep SVDD}
+In this methodology, we use a learned feature map \(f_\theta(x)\), where \(\theta\) paramterizes some neural network, with \(\theta\) learned is jointly over the supervised learning component and the anomaly detection \((R,c)\) or \((w,\gamma,\rho)\). The anomaly detection optimization problem is given as 
+\begin{align}
+    \begin{aligned}
+    &\minimize_{R,c,\theta}  && R^2+\frac{1}{\nu n}\sum_{i=1}^{n}\max (0,\norm{\phi_\theta(x_i)-c}^2-R^2) + Reg(\theta)
+    \end{aligned}  \nn
+\end{align}
+Here, typically some regularization is put on \(\theta\) since otherwise it tends to fit maps such that all points in feature space  start falling within the sphere. It is typically trained through stochastic gradient descent
+
+
+\subsection{MSP and ODIN}
+MSP stands for \emph{Maximum Softmax Probability} and works on the principle that the NN holds enough discriminative power to classify in distribution samples confidently. This leads to the formulation where we call an input out of distribution when the NN cannot classify it confidently. 
+\vspace{1mm}
+\\ODIN or \emph{Out of Order Distribution for Neural Networks} enhances MSP by preprocessing data smartly and adding a temperature control on the softmax performed. It works in the following way:
+\vspace{1mm}
+\begin{enumerate}
+    \item \label{mpp:gen_0} Preprocesses input \(x\) as
+    \begin{align}
+        \begin{aligned}
+          & x'=x+\eps * sgn \left( \Jacobian_x log(f_\theta^{\hat{y}}(x,\tau)) \right)\\
+          & f_\theta^i(x,\tau) = \frac{e^{\frac{l_i(x)}{\tau}}}{\sum_{i=1}^n e^{\frac{l_i(x)}{\tau}}}
+        \end{aligned} \nn
+    \end{align}
+where \(l_i(x)\) is the logit output of neural network \(l: \Rbb^d \ra \Rbb^p \)
+
+
+\item \label{mpp:gen_1} Defines the anomaly hypothesis map \(h\) as 
+     \begin{align}
+        \begin{aligned}
+          & s_\theta(x)= \max f_\theta^i(x,\tau) \\
+          & h_\theta(x)= 2 * \left( \mathbf{1}[s_\theta(x) < \delta] - 1 \right) -1
+        \end{aligned} \nn
+    \end{align}
+\end{enumerate}
+
+\subsection{Outlier Exposure}
+Well the issue with our current methods is that they are overfitted on in distribution data. It is very likely that out of distribution data looks very different and might lead the overfit classifier to falsely label them as being in distribution. To prevent this, we perform outlier exposure by slightly tweaking our NN loss functions. Our goal is to now minimize
+\begin{align}
+    \begin{aligned}
+            &\minimize_{\theta}  && \underset{x \sim \mathbb{P}^+}{\mathbb{E}} l(h_\theta(x),y) + \lambda  \underset{x \sim \mathbb{P}^-}{\mathbb{E}} l_{OE}(f_\theta(x) \\
+        \end{aligned} \nn
+\end{align}
+Here \(\lambda\) controls the rate of outliers we expect in testing and \(\l_{OE}\) is the loss we want to calculate over outlier data. We generally assume that the out of order ditribution is uniform in some sense.
+
+\subsection{Enhancing MSP}
+We essentially want to temper the confidence of our classifier, by saying "Hey! Don't be so confident about your predictions, they might be on out of distribution data!!". We design two outlier two loss functions for the same.
+\vspace{1mm}
+\begin{enumerate}
+    \item \label{mpp:gen_0}
+    \begin{align}
+        l_{OE}(x)= - \sum_{j=1}^{|C|} \frac{1}{|C|} \log(f_\theta^j(x)) \nn
+    \end{align}
+    We \emph{assume} that a good classification is a confident classification.
+
+    \item \label{mpp:gen_1} To make a distinction between a \emph{good} and \emph{confident} classification we artificially introduce a confidence estimation branch \(c(x) \in [0,1]\) and set \(l_{OE}(x)=-\log(c(x))\).\\
+    \vspace{1mm}
+    During training we then try to minimize
+    \begin{align}
+        l(x)= - \sum_{j=1}^{|C|} \log(cf_\theta(x_j)+(1-c)y_j)y_j -B\log(c(x)) \nn
+    \end{align}
+
+    Essentially, what we try to say is that if we are not confident about whether the input is from distribution, then our NN doesn't pay a training loss, however we pay a confidence loss. If we are confident, then we incur a training loss as well. This flips our notion from good \(\implies\) confident to good \(\impliedby\) confident
+    
+\end{enumerate}
+
+\subsection{Grad Norm KL Divergence}
+Instead of looking at the maximum softmax probability as a measure of confidence, we look at the gradient of the norm of the KL divergence as such a measure. The intuition is that low gradient norm implies points close to margins and so more likely to be OOD. We define this using
+\begin{align}
+    \begin{aligned}
+        D_{KL}(U || f_\theta(x)) &= \sum_{j=1}^{|C|} \frac{1}{|C|} \log \left( \frac{1/|C|}{f_\theta^j(x)} \right)\\
+        &= - \frac{1}{|C|} \sum_{j=1}^{|C|}  \log \left( |C|f_\theta^j(x) \right)
+    \end{aligned} \nn
+\end{align}
+
+Our hypothesis function \(h\) then is \(h_\theta(x)= 2 * \left( \mathbf{1} \left[ \norm{\Jacobian_\theta D_{KL}}_2 < \delta \right] - 1 \right) -1 \)
+
+
+ 
+
+\subsection{Cons of the above methods}
+    While the above methods are very intuitive and make sense, most of their guarantees are empirical and not theoretical. They have also been designed in an adhoc manner with not much theoretical basis as to why they might be good. It might be useful to try and get some SLT like bounds on these like the one we had for the one class SVM.
+% \bibliographystyle{plain}
+% \bibliography{refs}
+
+
+\end{document}
