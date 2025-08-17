@@ -15,7 +15,10 @@
 \usepackage{graphicx}   
 \graphicspath{{./}{images/}}   
 
+\usepackage{xcolor}
 
+\newcommand{\ab}[1]{\textcolor{purple}{[#1 - AB]}}
+\newcommand{\abedit}[1]{\textcolor{purple}{#1}}
 
 
 \bibliographystyle{plain}
@@ -79,7 +82,8 @@ Lecture 2 -- 01/08/2025
 \subsection{Efficient learning with convexity}
 
 Under what conditions on the surrogate loss \& hypothesis class is
-\textit{efficient learning} possible?
+\textit{efficient learning} possible? \ab{Remind people that efficient learning
+is not possible with the $0-1$ loss}
 
 \subsubsection{Convexity}\label{sec:Convexity}
 \begin{enumerate}
@@ -90,7 +94,7 @@ Under what conditions on the surrogate loss \& hypothesis class is
 \small{Note: Implicitly treating $H\subset\mathbb{R}^d$ \& $h\in \mathbb{R}^d$}
 
 \subsubsection{Boundedness}\label{sec:Boundedness}
-We say a function is bounded if there exists a real number $B > 0$, such that 
+We say a function \ab{Is the function bounded here or is the set bounded?} is bounded if there exists a real number $B > 0$, such that 
 $\forall h \in H$, $\lvert\lvert h \rvert\rvert_2 \leq B$
 
 \subsubsection{Lipschitzness}\label{sec:Lipschitzness}
@@ -102,17 +106,23 @@ We say a function $l$ to be Lipschitz continuous if,
 \[
 \Rightarrow \lvert\lvert\nabla l(z,h)\rvert\rvert \leq \rho \text{ where} \{z,h\} \text{and} \{z, h'\} \in \text{the domain of function $l$, i.e., the gradient of function can't be infinite.} 
 \]
+\ab{The second condition requires differentiability, and with respect to what!?}
 
 \subsubsection{Smoothness}\label{sec:Smoothness}
 We say a function $l$ to be smooth if,
 \[
-\forall z,h,h' \lvert\lvert \nabla l(z,h) - \nabla l(z,h')\rvert\rvert \leq \beta\lvert\lvert h-h'\rvert\rvert \text{where } \{z,h\} \text{ and } \{z, h'\} \in \text{the domain of function }l, \text{and } \beta \text{ is some constant}.
+\forall z,h,h' \lvert\lvert \nabla l(z,h) - \nabla l(z,h')\rvert\rvert \leq \beta\lvert\lvert h-h'\rvert\rvert 
+\]
+\[
+\text{where } \{z,h\} \text{ and } \{z, h'\} \in \text{the domain of function }l, \text{and } \beta \text{ is some constant}.
 \]
 
 % refine paragraph below
 With convex sets that satisfy ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Lipschitzness}, or  ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Smoothness} we get problems that are learnable and usually efficient.
 
-\small{Note: There exist convex learning problems that satisfy ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Lipschitzness} that are not efficiently learnable.}
+\noindent \textbf{Note}: There exist convex learning problems that satisfy
+~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Lipschitzness} that
+are not efficiently learnable. See 12.6.4 in \cite{ShalevShwartzUnderstandingML}.
 
 \subsection{Optimizing over Vector Spaces}
 Let $\vec{\theta}\in\mathbb{R}^d$ and let $f:H\to\mathbb{R}$. We want to minimize $f(\vec{\theta})$ over
@@ -132,7 +142,7 @@ Then, for any $\vec{\theta}_1, \vec{\theta}_2 \in H$ and any subgradient $g \in 
 \[
     f(\vec{\theta}_1) - f(\vec{\theta}_2) \;\le\; g^\top \big(\vec{\theta}_1 - \vec{\theta}_2\big).
 \]
-Here:
+Here: \ab{Is $g$ the subgradient at $\vec{\theta}_1$ or $\vec{\theta}_1$ ?}
 \begin{itemize}
     \item $\vec{\theta}_1, \vec{\theta}_2 \in H$ are two points in the domain of $f$.
     \item $f : H \to \mathbb{R}$ is a convex function.
@@ -154,6 +164,8 @@ The key question arises is how do we optimize a convex-bounded Lipschitz functio
     \caption{Projection Lemma}
     \label{fig:placeholder}
 \end{figure}
+
+\ab{Please write it formally here}
 
 \[
 \lvert\lvert\vec{a}\rvert\rvert^2 + \lvert\lvert\vec{b}\rvert\rvert^2 \leq \lvert\lvert \omega -\theta\rvert\rvert^2
@@ -192,7 +204,7 @@ By convexity (subgradient inequality with $g_t=\nabla f(\theta_t)\in\partial f(\
 f(\theta_t)-f(\theta^*) \;\le\; g_t^{\top}(\theta_t-\theta^*).
 \]
 
-\textbf{(Three-point identity.}
+\textbf{Three-point identity.}
 Using the elementary identity
 \[
 2a^{\top}b=\|a\|_2^2+\|b\|_2^2-\|a-b\|_2^2
@@ -217,7 +229,7 @@ f(\theta_t)-f(\theta^*) \;\le\;
 \]
 
 \textbf{Sum and telescope.}
-Summing $t=1$ to $T$ and using $\|g_t\|_2\le \rho$,
+Summing $t=1$ to $T$ and using $\|g_t\|_2\le \rho$, \ab{One more thing is used here...}
 \[
 \sum_{t=1}^T \bigl(f(\theta_t)-f(\theta^*)\bigr)
 \;\le\; \frac{\|\theta_1-\theta^*\|_2^2}{2\eta} \;+\; \frac{\eta\rho^2 T}{2}.
@@ -243,7 +255,7 @@ f\!\left(\frac1T\sum_{t=1}^T\theta_t\right)-f(\theta^*)
 \]
 \end{proof}
 
-\small{Note:The rate is dimension independant.}
+\textbf{Note}:The rate is dimension independent!
 
 The key question which now arises is how we can use gradient descent for learning?
 
@@ -262,8 +274,9 @@ f(\vec{\theta}) = \mathbb{E}_{\vec{z} \sim p^*} \left[ l(\vec{z}, \vec{\theta}) 
 In Option 2, we do not have access to the full distribution, so we use (fresh) random samples.
 
 \subsubsection{Stochastic Gradient Descent}
-In SGD, we don't do gradient descent over all of the dataset, rather we use only some datapoints for the process of updation, and hence $\vec{z}_t$
-For $t = 1, \dots, T$, sample $\vec{z}_t \sim p^*$.  
+In SGD, we don't do gradient descent over all of the dataset, rather we use only
+some datapoints for the process of updation, and hence $\vec{z}_t$
+\ab{incomplete sentence} For $t = 1, \dots, T$, sample $\vec{z}_t \sim p^*$.  
 Then,
 \[
 \vec{\omega}_{t+1} = \vec{\theta}_t - \eta \, \nabla_\theta l(\vec{z}_t, \vec{\theta}_t),
@@ -285,8 +298,8 @@ If $\eta = \frac{B}{\rho \sqrt{T}}$, then
 Otherwise, the underlying assumption that the stochastic gradient is an unbiased estimator of the loss does not hold.
 
 \medskip
-\noindent\textit{Why is this true?}  
-In Option 1, we can make as many passes over the data as we wish.
+\noindent 
+In Option 1, we can make as many passes over the data as we wish. \textit{(Why is this true?)} 
 
 \subsection{Vacuous Bounds in Statistical Learning Theory}
 
@@ -330,6 +343,8 @@ However, a newer kind of phenomenon in modern overparameterized models (e.g., de
 
 \subsection{Unsupervised Learning \& Anomaly Detection}
 
+\ab{A lot of the material here is taken from An Unifying Review of Deep and Shallow Anomaly Detection, please cite it}
+
 \subsubsection{Assumptions in Traditional Supervised Learning}
 \begin{enumerate}
   \item \textbf{Labeled data available:} training examples $(x_i,y_i)$ are provided.
@@ -337,7 +352,9 @@ However, a newer kind of phenomenon in modern overparameterized models (e.g., de
   \[
     (x,y)\sim P_{\text{train}}=P_{\text{test}}.
   \]
-  \textit{Remark:} When this fails, we study distributionally robust optimization and domain adaptation to handle covariate shift, concept drift, label shift, etc.).
+  \textit{Remark:} When the second assumption fails, we study distributionally
+  robust optimization and domain adaptation to handle covariate shift, concept
+  drift, label shift, etc..
 \end{enumerate}
 
 \subsubsection{Unsupervised Learning}
@@ -359,14 +376,14 @@ If $P^{+}$ has a probability density function, then we chose a threshold $\tau\g
 \begin{enumerate}
   \item Modeling $P^{+}$ is hard. Misspecification leads to errors:
   \[
-    \text{FPR}=\Pr_{x\sim P^{t}}[\hat y(x)=\text{anomaly}],\quad
+    \text{FPR}=\Pr_{x\sim P^{+}}[\hat y(x)=\text{anomaly}],\quad
     \text{FNR}=\Pr_{x\sim P^{\text{anom}}}[\hat y(x)=\text{normal}].
   \]
   High complexity of $P^{+}$ can cause either large FPR (typical $x\sim P^{+}$ wrongly flagged) or large FNR (true anomalies missed).
   \item Anomalies may come from arbitrary, heterogeneous distributions $\{P^{i}\}$ (one or many) and are rare.
 \end{enumerate}
 
-\paragraph{Model of Normality}
+\paragraph{Model of Normality:}
 Since we have samples from $P^{
 +
 }$, we try to model \emph{normality} directly and treat all training examples as label $1$ (normal).
