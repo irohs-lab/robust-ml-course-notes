@@ -76,30 +76,43 @@ Lecture 2 -- 01/08/2025
 \noindent\textit{Lecturer: Arjun Bhagoji \hfill Scribe: Akshaj Aithal, Rahul Kumar Yadav}
 \end{tcolorbox}
 
-\subsection{Under what condition on the surrogate loss \& hypothesis class is \textit{efficient learning} possible?}
+\subsection{Efficient learning with convexity}
 
-\subsubsection{ Convexity}\label{sec:Convexity}
-    \item $H$ must be a convex set \Rightarrow $\forall h, h',\alpha h + (1-\alpha)h'$ \in $H$. 
-    \item $l(h,z)$ \text{must be a convex function in } $h$ \\ \Rightarrow $\forall z, l(\alpha h+(1-\alpha)h',z) \leq \alpha l(h,z) + (1-\alpha)l(h',z)$
+Under what conditions on the surrogate loss \& hypothesis class is
+\textit{efficient learning} possible?
+
+\subsubsection{Convexity}\label{sec:Convexity}
+\begin{enumerate}
+  \item $H$ must be a convex set $\Rightarrow \forall h, h',\alpha h + (1-\alpha)h' \in H$. 
+  \item $l(h,z)$ must be a convex function in $h$ $\Rightarrow \forall z, l(\alpha h+(1-\alpha)h',z) \leq \alpha l(h,z) + (1-\alpha)l(h',z)$
+\end{enumerate}
 
 \small{Note: Implicitly treating $H\subset\mathbb{R}^d$ \& $h\in \mathbb{R}^d$}
 
 \subsubsection{Boundedness}\label{sec:Boundedness}
-We say a function is bounded if there exists a real number $B > 0$, such that:-
+We say a function is bounded if there exists a real number $B > 0$, such that 
 $\forall h \in H$, $\lvert\lvert h \rvert\rvert_2 \leq B$
 
 \subsubsection{Lipschitzness}\label{sec:Lipschitzness}
-We say a function $l$ to be lipschitz continuous if, 
-$\forall z,h,h', \lvert\lvert l(z,h) - l(z,h') \rvert\rvert \leq \rho\lvert\lvert h-h'\rvert\rvert \\
-\Rightarrow \lvert\lvert\nabla l(z,h)\rvert\rvert \leq \rho$ where ${z,h}$ and ${z, h'}$ \in \text{the domain of function $l$, i.e., the gradient of function can't be infinite.} 
+We say a function $l$ to be Lipschitz continuous if, 
+
+\[
+\forall z,h,h', \lvert\lvert l(z,h) - l(z,h') \rvert\rvert \leq \rho \lvert\lvert h-h'\rvert\rvert
+\]
+\[
+\Rightarrow \lvert\lvert\nabla l(z,h)\rvert\rvert \leq \rho \text{ where} \{z,h\} \text{and} \{z, h'\} \in \text{the domain of function $l$, i.e., the gradient of function can't be infinite.} 
+\]
+
 \subsubsection{Smoothness}\label{sec:Smoothness}
 We say a function $l$ to be smooth if,
-$\forall z,h,h' \lvert\lvert \nabla l(z,h) - \nabla l(z,h')\rvert\rvert \leq \beta\lvert\lvert h-h'\rvert\rvert$ where ${z,h}$ and ${z, h'}$ \in \text{the domain of function }$l$, and $\beta$ is some constant.
+\[
+\forall z,h,h' \lvert\lvert \nabla l(z,h) - \nabla l(z,h')\rvert\rvert \leq \beta\lvert\lvert h-h'\rvert\rvert \text{where } \{z,h\} \text{ and } \{z, h'\} \in \text{the domain of function }l, \text{and } \beta \text{ is some constant}.
+\]
 
 % refine paragraph below
 With convex sets that satisfy ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Lipschitzness}, or  ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Smoothness} we get problems that are learnable and usually efficient.
 
-\small{Note: There exists convex sets that satisfy ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Lipschitzness} that are not efficiently learnable.}
+\small{Note: There exist convex learning problems that satisfy ~\ref{sec:Convexity}, ~\ref{sec:Boundedness} \& ~\ref{sec:Lipschitzness} that are not efficiently learnable.}
 
 \subsection{Optimizing over Vector Spaces}
 Let $\vec{\theta}\in\mathbb{R}^d$ and let $f:H\to\mathbb{R}$. We want to minimize $f(\vec{\theta})$ over
@@ -134,7 +147,7 @@ If $f$ is differentiable at $\vec{\theta}_2$, then the subdifferential $\partial
 
 The key question arises is how do we optimize a convex-bounded Lipschitz function?
 
-\subsection{Projection Lemma}
+\subsubsection{Projection Lemma}
 \begin{figure}
     \centering
     \includegraphics[width=0.5\linewidth]{DS 603 diagram 001.png}
@@ -248,7 +261,7 @@ f(\vec{\theta}) = \mathbb{E}_{\vec{z} \sim p^*} \left[ l(\vec{z}, \vec{\theta}) 
 
 In Option 2, we do not have access to the full distribution, so we use (fresh) random samples.
 
-\subsection{Stochastic Gradient Descent}
+\subsubsection{Stochastic Gradient Descent}
 In SGD, we don't do gradient descent over all of the dataset, rather we use only some datapoints for the process of updation, and hence $\vec{z}_t$
 For $t = 1, \dots, T$, sample $\vec{z}_t \sim p^*$.  
 Then,
@@ -301,7 +314,7 @@ For large $d$ (as in modern deep networks), this bound predicts an astronomicall
 \subsubsection*{Why the Bound is Vacuous}
 In modern machine learning the number of training samples needed to get low test error is much smaller than that predicted by the fundamental theorem of statistical learning, thus, the bound on number of samples is of not much help to us! Thus, we need new theoretical approaches to understand how learning happens in the case of neural networks.
 
-\subsection{Double Descent}
+\subsubsection{Double Descent}
 
 \begin{figure}[ht]
   \centering
@@ -335,14 +348,14 @@ We observe unlabeled samples
 and no labels are provided.
 
 \subsubsection{Anomaly Detection}
-\paragraph{Basic problem.}
+\paragraph{Basic problem:}
 Given a new point $\tilde x$, decide whether it is \emph{in-distribution} (i.e., typical of $P^{+}$).
 If $P^{+}$ has a probability density function, then we chose a threshold $\tau\ge 0$ and define the anomaly set as
 \[
   \mathcal A := \{x\in\mathcal X \;:\; p^{+}(x)\le \tau\}.
 \]
 
-\subsubsection{Challenges}
+\paragraph{Challenges:}
 \begin{enumerate}
   \item Modeling $P^{+}$ is hard. Misspecification leads to errors:
   \[
@@ -353,11 +366,12 @@ If $P^{+}$ has a probability density function, then we chose a threshold $\tau\g
   \item Anomalies may come from arbitrary, heterogeneous distributions $\{P^{i}\}$ (one or many) and are rare.
 \end{enumerate}
 
-\subsubsection{Model of Normality}
+\paragraph{Model of Normality}
 Since we have samples from $P^{
 +
 }$, we try to model \emph{normality} directly and treat all training examples as label $1$ (normal).
-\paragraph{Notes on terminology.}
+
+\subsubsection{Notes on terminology and assumptions}
 The terms \emph{anomaly}, \emph{novelty}, and \emph{outlier} are used differently across fields:
 \begin{itemize}
   \item \textbf{Anomaly:} out-of-support/semantically different (e.g., a \emph{dog} when $P^{+}$ is cats).
@@ -365,7 +379,7 @@ The terms \emph{anomaly}, \emph{novelty}, and \emph{outlier} are used differentl
   \item \textbf{Novelty:} previously unseen but related subpopulation.(e.g., a new cat breed).
 \end{itemize}
 
-\subsubsection{Contamination}
+\paragraph{Contamination}
 \begin{enumerate}
   \item \textbf{Question.} How do we know all observed examples truly come from $P^{+}$? What if there is noise or corruption?
   \item \textbf{More general model (Huber $\varepsilon$-contamination).}
@@ -375,7 +389,7 @@ The terms \emph{anomaly}, \emph{novelty}, and \emph{outlier} are used differentl
   where $Q$ is an arbitrary (adversarial or unknown) distribution.
 \end{enumerate}
 
-\subsubsection{Other Unsupervised Learning Methods}
+\paragraph{Other Unsupervised Learning Methods}
 Below are some methods which we can use to look for the anomalies:-
 \begin{enumerate}
   \item \textbf{Clustering:} k-means.
@@ -398,7 +412,7 @@ Percy Liang.
 \newblock Available at \url{https://web.stanford.edu/~pliang/cs229/}.
 
 \bibitem{Salehi, M., Mirzaei, H., Hendrycks, D., Li, Y., Rohban, M. H., & Sabokrou, M. (2021). A Unified Survey on Anomaly, Novelty, Open-Set, and Out-of-Distribution Detection: Solutions and Future Challenges.}
-\newblock \emph{Salehi, M., Mirzaei, H., Hendrycks, D., Li, Y., Rohban, M. H., & Sabokrou, M. (2021). A Unified Survey on Anomaly, Novelty, Open-Set, and Out-of-Distribution Detection: Solutions and Future Challenges.}
+\newblock \emph{Salehi, M., Mirzaei, H., Hendrycks, D., Li, Y., Rohban, M. H., and Sabokrou, M. (2021). A Unified Survey on Anomaly, Novelty, Open-Set, and Out-of-Distribution Detection: Solutions and Future Challenges.}
 \newblock ArXiv. \url{https://arxiv.org/abs/2110.14051}
 
 \bibitem{Convex Optimization: Algorithms and Complexity — Sébastien Bubeck (2015 lecture notes)}
