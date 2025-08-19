@@ -82,11 +82,13 @@ Lecture 2 -- 01/08/2025
 \end{tcolorbox}
 
 \subsection{Efficient learning with convexity}
+
 Since, we know that for the non-convex $0$-$1$ loss efficient learning is not possible, as its minimization is NP-hard(from Feldman et al 2012). Hence,
 to enable tractable optimization, \textbfsurrogate losses} (e.g., hinge, logistic), are used, which can be minimized efficiently.
 We know that, the surrogate loss needs to be \emph{classification-calibrated or consistent} with $0$-$1$ loss, as in that case, we can be sure that minimizing surrogate loss aligns with minimizing the $0$-$1$ risk.
 Now, we need to ask under what conditions on the surrogate loss \& hypothesis class is
 \textit{efficient learning} possible?
+
 
 \subsubsection{Convexity}\label{sec:Convexity}
 \begin{enumerate}
@@ -97,6 +99,7 @@ Now, we need to ask under what conditions on the surrogate loss \& hypothesis cl
 \small{Note: Implicitly treating $H\subset\mathbb{R}^d$ \& $h\in \mathbb{R}^d$}
 
 \subsubsection{Boundedness}\label{sec:Boundedness}
+
 Our hypothesis class $H$ needs to be bounded, which can be mathematically stated as $\forall h \in H$, $\lvert\lvert h \rvert\rvert_2 \leq B$, i,e. every element 
 $h$ in the hypothesis class $H$ has bounded norm.
 
@@ -124,6 +127,7 @@ If $l(z,h)$ is differentiable in $h$, then the Lipschitz condition is \emph{equi
     \item Bounded gradients guarantee Lipschitz continuity, but the converse is not always true: 
           a function can be Lipschitz continuous without being differentiable everywhere (e.g., the hinge loss). 
 \end{itemize}
+
 
 \subsubsection{Smoothness}\label{sec:Smoothness}
 We say a function $l$ to be smooth if,
@@ -159,6 +163,7 @@ Then, for any $\vec{\theta}_1, \vec{\theta}_2 \in H$ and any subgradient $g \in 
 \[
     f(\vec{\theta}_1) - f(\vec{\theta}_2) \;\ge\; g^\top \big(\vec{\theta}_1 - \vec{\theta}_2\big).
 \]
+
 \begin{itemize}
     \item $\vec{\theta}_1, \vec{\theta}_2 \in H$ are two points in the domain of $f$.
     \item $f : H \to \mathbb{R}$ is a convex function.
@@ -174,6 +179,7 @@ If $f$ is differentiable at $\vec{\theta}_2$, then the subdifferential $\partial
 The key question arises is how do we optimize a convex-bounded Lipschitz function?
 
 \subsubsection{Projection Lemma}
+
 
 \begin{figure}[h]
 \centering
@@ -222,6 +228,7 @@ and any $\theta \in H$, we have
     \;\leq\; \|\omega - \theta\|_2^2.
 \]
 , which for our figure becomes
+
 \[
 \lvert\lvert\vec{a}\rvert\rvert^2 + \lvert\lvert\vec{b}\rvert\rvert^2 \leq \lvert\lvert \omega -\theta\rvert\rvert^2
 \]
@@ -287,7 +294,9 @@ f(\theta_t)-f(\theta^*) \;\le\;
 \]
 
 \textbf{Sum and telescope.}
+
 Summing $t=1$ to $T$, applying the telescoping identity 
+
 \[
 \sum_{t=1}^T \bigl(\|\theta_t-\theta^*\|_2^2 - \|\theta_{t+1}-\theta^*\|_2^2\bigr) 
 = \|\theta_1-\theta^*\|_2^2 - \|\theta_{T+1}-\theta^*\|_2^2,
@@ -335,7 +344,9 @@ In Option 2, we do not have access to the full distribution, so we use (fresh) r
 
 \subsubsection{Stochastic Gradient Descent}
 In SGD, we don't do gradient descent over all of the dataset, rather we use only
+
 some datapoints for the process of updation. Typically, when the number of datapoints, $z^* =1$, then it is termed as Stochastic Gradient Descent, else it is called mini-batch gradient descent. When batch size equals $1$, then  For $t = 1, \dots, T$, sample $\vec{z}_t \sim p^*$.  
+
 Then,
 \[
 \vec{\omega}_{t+1} = \vec{\theta}_t - \eta \, \nabla_\theta l(\vec{z}_t, \vec{\theta}_t),
@@ -410,6 +421,7 @@ However, a newer kind of phenomenon in modern overparameterized models (e.g., de
 
 
 \subsection{Unsupervised Learning \& Anomaly Detection}
+
 
 Much of the material in this section is adapted from the survey namely \emph{A Unifying Review of Deep and Shallow Anomaly Detection by Lukas Ruff et al.}, which provides a comprehensive review of deep and shallow anomaly detection methods.
 
