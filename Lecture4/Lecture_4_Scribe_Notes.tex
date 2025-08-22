@@ -70,10 +70,19 @@ distribution. \cite{ruff2020unifying}}
     \label{fig:placeholder}
 \end{figure}
 
+Thus if $c_\alpha(x)$ is -1, we label the point x as an anomaly. Thus our task of finding anomalies reduces to the task of finding or estimating the underlying distribution p.
+
 \section{Estimating the distribution p}
 \subsection{Parametric Vs Non-Parametric density estimation} One can have priors about the distribution $p$ and try to get estimates of parameter $\theta$ such that $p_\theta(x)$ is maximized.
 
-Thus in parametric, the $\theta$ to be estimated is finite-dimensional. In non-parametric, $\theta$ is infinite-dimensional. Concretely, $p^+(x)$ can be any measurable density $f: \Rbb^d \ra \Rbb$ and $\theta \equiv f$ and $\Theta \equiv \mathcal{F}$ (space of all measurable functions) in this case. 
+    For example, if it's known that samples are from a gaussian with unknown mean and known variance, $\mathcal{N}(\mu, \sigma)$, we know that $\hat{\mu}
+    = \frac{\sum _{i=1} ^n x_i}{n}$ is an unbiased estimator of the true mean $\mu$. In fact, it can be shown that it is the uniformly minimum-variance unbiased estimator (UMVUE) i.e. an unbiased estimator that has lower variance than any other unbiased estimator for all possible values of the parameter.
+
+    After we have an estimate of $\theta$ i.e. $\hat{\theta} = \hat{\mu}$ , we can use it for estimating p and finding outliers. 
+
+    However, it's not necessary that the underlying distribution can be represented through a family of distributions and parameters. In this case, it's called a non-parametric density estimation. 
+    
+Thus in parametric, the $\theta$ to be estimated is finite-dimensional. In non-parametric, $\theta$ is infinite-dimensional. As a concrete example of non-parametric family of distributions, consider the family of all measurable functions, i.e. $p^+(x)$ can be any measurable density $f: \Rbb^d \ra \Rbb$ and $\theta \equiv f$ and $\Theta \equiv \mathcal{F}$ (space of all measurable functions). In this case parameter estimation is not possible, and we do kernel density estimation instead.
 
 \subsection{Kernel Density Estimation}
 Denote by $B(x, h)$ a ball of sze h centered around x. If $p^+(x)$ changes slowly around $B(x,h)$ i.e. 
@@ -130,7 +139,8 @@ Ultimately, we want a solution that minimizes the following loss function
     \arg\!\min_h L(h) 
     = \arg\!\min_h \mathbb{E}\limits_{\boldsymbol{x} \sim \mathbb{P}^+} \left[ l(h(\boldsymbol{x}), 1) \right] + \mathbb{E}\limits_{\boldsymbol{x} \sim \mathbb{P}^-} \left[ l(h(\boldsymbol{x}), -1) \right]
 \end{align}
-Since we cannot get any samples from $\mathbb{P^-}$, we typically add a regularizer to the loss function to account for the latter term.
+Since we cannot get any samples from $\mathbb{P^-}$, we typically add a regularizer to the loss function to account for the latter term. Typically the regularizer is a norm constraint (say L1 or L2 norm) on the hypothesis $h$ i.e.
+$$\hat{L_R}(h) = \frac{1}{n}\sum _{i=1} ^n l(h(\boldsymbol{x}, 1) + R(h)$$
 
 To get to the sphere optimization problem, we make the following assumptions - 
 \begin{enumerate}
@@ -155,7 +165,7 @@ L(\theta) = \mathbb{E}_{\boldsymbol{x} \sim \mathbb{P}^+} \left[ \frac{1}{1 + \n
 \rightarrow L_-(\theta)
 \]
 \text{Under Assumption 3:}
-\[
+\[ L_{-}(\theta) = 
 \mathbb{E}_{\boldsymbol{x} \sim \mathbb{P}^-} \left[ \frac{\nu}{1+\nu} \max(0, R^2 - \|\boldsymbol{x} - \boldsymbol{c}\|^2) \right]
 = \frac{\nu}{1+\nu} \int \max(0, R^2 - \|\boldsymbol{x} - \boldsymbol{c}\|^2) \, d\mathbb{P}^-(\boldsymbol{x})
 \]
@@ -163,9 +173,14 @@ L(\theta) = \mathbb{E}_{\boldsymbol{x} \sim \mathbb{P}^+} \left[ \frac{1}{1 + \n
 = \frac{\nu}{1+\nu} \cdot \frac{1}{\mu(\mathcal{X})} \int \max(0, R^2 - \|\boldsymbol{x} - \boldsymbol{c}\|^2) \, d\mu(\boldsymbol{x})
 \]
 \[
-\leq \frac{\nu}{1+\nu} \cdot \frac{1}{\mu(\mathcal{X})} \cdot \left( \mu(B_R(\boldsymbol{c})) \cdot R^2 \right)
+\leq \frac{\nu}{1+\nu} \cdot \frac{1}{\mu(\mathcal{X})} \int R^2 \, d\mu(\boldsymbol{x})
 \]
-
+\[
+= \frac{\nu}{1+\nu} \cdot \frac{1}{\mu(\mathcal{X})} \cdot \left( \mu(B_R(\boldsymbol{c})) \cdot R^2 \right)
+\]
+\[
+= \frac{\nu}{1+\nu} R^2 \cdot \frac{\mu(B_R(\boldsymbol{c})}{\mu(\mathcal{X})}
+\]
 \[
 \Rightarrow L^-(\theta) \leq \frac{\nu}{1+\nu} R^2
 \]
@@ -205,14 +220,23 @@ the \emph{Lagrangian} is
 with dual variables $\alpha_i \geq 0$.  
 The \emph{dual function} is
 \[
-g(\boldsymbol{\alpha}) = \inf_{\mathbf{x}} \mathcal{L}(\mathbf{x}, \boldsymbol{\alpha}),
+g(\boldsymbol{\alpha}) = \inf_{\mathbf{x}} \, \mathcal{L}(\mathbf{x}, \boldsymbol{\alpha}),
 \]
 and the \emph{dual problem} is:
 \[
-g^* = \max_{\boldsymbol{\alpha} \ge 0} \quad g(\boldsymbol{\alpha}).
+g^* = \sup_{\boldsymbol{\alpha} \ge 0} \; g(\boldsymbol{\alpha}).
 \]
-By \textbf{weak duality}, the dual optimum is always a lower bound to the primal optimum.  
-$$g^* \le f_0(x^*)$$
+Formally, the dual optimum should be written with $\sup$ rather than $\max$, 
+since in general the maximum may not be attained. In the SVDD case, however, 
+strong duality ensures that the supremum is attained, so it is also valid to write
+\[
+g^* = \max_{\boldsymbol{\alpha} \ge 0} \; g(\boldsymbol{\alpha}).
+\]
+
+By \textbf{weak duality}, the dual optimum is always a lower bound to the primal optimum:
+\[
+g^* \le f_0(x^*).
+\]
 
 \subsection{Strong Duality}
 For convex optimization problems satisfying Slater's condition (strict feasibility), \emph{strong duality} holds \cite[Section~5.3]{boyd2004convex}.  
@@ -220,7 +244,19 @@ This means the optimal primal and dual objective values coincide:
 \[
 g^\star = f_0(x^\star)
 \]
-Moreover, the optimal primal and dual variables correspond to a \emph{saddle point} of the Lagrangian.
+Moreover, the optimal primal and dual variables correspond to a \emph{saddle point} of the Lagrangian, i.e.,
+\[
+\mathcal{L}(x^\star, \boldsymbol{\alpha}) \;\le\; \mathcal{L}(x^\star, \boldsymbol{\alpha}^\star) 
+\;\le\; \mathcal{L}(x, \boldsymbol{\alpha}^\star), 
+\quad \forall x, \; \forall \boldsymbol{\alpha} \ge 0,
+\]
+which means that $\mathcal{L}$ is minimized in $x$ at $x^\star$ and maximized in $\boldsymbol{\alpha}$ at $\boldsymbol{\alpha}^\star$.  
+Equivalently, strong duality ensures the min–max equality:
+\[
+\inf_x \sup_{\boldsymbol{\alpha} \ge 0} \mathcal{L}(x,\boldsymbol{\alpha})
+\;=\;
+\sup_{\boldsymbol{\alpha} \ge 0} \inf_x \mathcal{L}(x,\boldsymbol{\alpha}).
+\]
 
 \subsection{Karush–Kuhn–Tucker (KKT) Conditions}
 For convex, differentiable objectives and constraints, the following KKT conditions must hold for optimal primal variables $\theta^\star$ and optimal dual variables $(\lambda^\star, \mu^\star)$:
