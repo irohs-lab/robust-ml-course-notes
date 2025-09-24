@@ -1,6 +1,7 @@
 % -----------------------------*- LaTeX -*------------------------------
 \documentclass[11pt]{report}
 \usepackage{scribe_ds603}
+
 \begin{document}
 
 
@@ -66,7 +67,7 @@ threshold anomaly detector \( c_\alpha : \mathcal{X} \rightarrow \{ \pm 1 \} \) 
     \includegraphics[width=0.5\linewidth]{images/levelset.jpeg}
     \caption{Illustration of the $\alpha$-density level sets $C_\alpha$ with threshold
 $\tau_\alpha$ for a univariate (left) and bivariate (right) standard Gaussian
-distribution. \cite{ruff2020unifying}}
+distribution \cite{ruff2020unifying}}
     \label{fig:placeholder}
 \end{figure}
 
@@ -80,12 +81,20 @@ Thus if $c_\alpha(x)$ is -1, we label the point x as an anomaly. Thus our task o
 
     After we have an estimate of $\theta$ i.e. $\hat{\theta} = \hat{\mu}$ , we can use it for estimating p and finding outliers. 
 
-    However, it's not necessary that the underlying distribution can be represented through a family of distributions and parameters. In this case, it's called a non-parametric density estimation. 
+However, it's not necessary that the underlying distribution can be
+    represented through a family of distributions and parameters. In this case,
+    it's called a non-parametric density estimation. 
     
-Thus in parametric, the $\theta$ to be estimated is finite-dimensional. In non-parametric, $\theta$ is infinite-dimensional. As a concrete example of non-parametric family of distributions, consider the family of all measurable functions, i.e. $p^+(x)$ can be any measurable density $f: \Rbb^d \ra \Rbb$ and $\theta \equiv f$ and $\Theta \equiv \mathcal{F}$ (space of all measurable functions). In this case parameter estimation is not possible, and we do kernel density estimation instead.
+Thus in parametric, the $\theta$ to be estimated is finite-dimensional. In
+non-parametric density estimation, $\theta$ is infinite-dimensional. As a concrete example of
+non-parametric family of distributions, consider the family of all measurable
+functions, i.e. $p^+(x)$ can be any measurable density $f: \Rbb^d \ra \Rbb$ and
+$\theta \equiv f$ and $\Theta \equiv \mathcal{F}$ (space of all measurable
+functions). In this case parameter estimation is not possible, and we do kernel
+density estimation instead.
 
 \subsection{Kernel Density Estimation}
-Denote by $B(x, h)$ a ball of sze h centered around x. If $p^+(x)$ changes slowly around $B(x,h)$ i.e. 
+Denote by $B(x, h)$ a ball of radius h centered around $x$. If $p^+(x)$ changes slowly around $B(x,h)$ i.e. 
 \begin{align}
     \mathbb{P}(B(x,h)) = \int _{x \in B(x,h)} p^+(x)dx \approx p^+(x) \int _{x \in B(x,h)} dx = p^+(x) \mu(B(x,h))
 \end{align}
@@ -95,14 +104,18 @@ Thus we can get a local density estimate of $p^+(x)$ that depends on the choice 
 \end{align}
 where $\hat{\mathbb{P}}$ estimates the probability in a region. For example if we define $\hat{\mathbb{P}}$ as
 \begin{align}
-    \hat{\mathbb{P}}(B(x,h)) &= \frac{1}{n} \sum _{i=1} ^n \mathbbm{1}\left[ x_i \in B(x,h)\right]\\
-    \implies \hat{p}_h^+(x) &= \frac{1}{n \mu(B(x,h))}\sum _{i=1} ^n \mathbbm{1}\left[ \norm{x - x_i} \leq h\right] \nonumber\\
-    &= \frac{1}{nh^dV}\sum _{i=1} ^n \mathbbm{1}\left[ \frac{\norm{x - x_i}}{h} \leq 1\right] \tag*{\text{($V_d=$volume for $d$-dimensional ball of unit radius)}} \nonumber\\
-    &= \frac{1}{nh^d}\sum _{i=1} ^n K\left(\frac{\norm{x - x_i}}{h}\right) \tag*{\text{(Using kernel function $K(u) = \frac{\mathbbm{1}[\norm{u} \leq 1]}{V_d}$)}} \nonumber\\
+    \hat{\mathbb{P}}(B(x,h)) &= \frac{1}{n} \sum _{i=1} ^n \bm{1}\left[ x_i \in B(x,h)\right]\\
+    \implies \hat{p}_h^+(x) &= \frac{1}{n \mu(B(x,h))}\sum _{i=1} ^n \bm{1}\left[ \norm{x - x_i} \leq h\right] \nonumber\\
+    &= \frac{1}{nh^dV_d}\sum _{i=1} ^n \bm{1}\left[ \frac{\norm{x - x_i}}{h} \leq 1\right] \tag*{\text{($V_d=$volume for $d$-dimensional ball of unit radius)}} \nonumber\\
+    &= \frac{1}{nh^d}\sum _{i=1} ^n K\left(\frac{\norm{x - x_i}}{h}\right) \tag*{\text{(Using kernel function $K(u) = \frac{\bm{1}[\norm{u} \leq 1]}{V_d}$)}} \nonumber\\
 \end{align}
 Here we ended up using a Box-Kernel, which is defined as above. Instead, one can also use other kernels like Gaussian $(K(u) = \frac{1}{Z} \exp(-\norm{u}^2/2))$. In fact we can use any $K: \Rbb^d \ra \Rbb$ s.t. $\int _{\Rbb^d} K(u)du = 1$. 
 
-We call $h$ as the bandwidth, and the choice of $h$ leads to an obvious bias-variance tradeoff - if $h$ is too small $\implies$ smaller bias, however a larger variance since number of points used for estimation are smaller. If $h$ is too large, this variance reduces, however, then $\hat{p}_h^+(x)$ is biased. 
+We call $h$ as the bandwidth, and the choice of $h$ leads to an obvious
+bias-variance tradeoff - if $h$ is small $\implies$ smaller bias as a more
+powerful estimator is possible. However, this incurs a a larger variance since
+number of points used for estimation per kernel is smaller. If $h$ is large,
+this variance reduces, however, then $\hat{p}_h^+(x)$ is biased. 
 
 But if we choose $h$ appropriately, it can be shown that $\hat{p}_h^+(x)$ converges to true $p(x)$. Chen 2017 \cite{Chen2017-ns} considers the following three errors and gives theoretical convergence rates based on the the choice of $h$. \begin{enumerate}
     \item pointwise error i.e. $\hat{p}_h^+(x) - p(x)$
@@ -114,12 +127,16 @@ But if we choose $h$ appropriately, it can be shown that $\hat{p}_h^+(x)$ conver
 We can get an estimate of the level sets as follows 
 \begin{align}
     \hat{C}_\alpha = \aset{x \in \mathcal{X} \suchthat \hat{p}_h^+(x) > \lambda}
-\end{align} such that $\hat{p}_h^+(x) > \lambda$ captures some sufficient probability. However, this is a very roundabout approach of selecting outliers since we first need the density and this generates quantiles for all values of $\alpha$, which is too overkill for the task of finding outliers. 
+\end{align} such that $\hat{p}_h^+(x) > \lambda$ captures some sufficient probability. However, this is a very roundabout approach of selecting outliers since we first need the density and this generates quantiles for all values of $\alpha$, which is an overkill for the task of finding outliers. 
 
-Instead can we do a Frequentist approach and find a function $f$ that is +1 over some set $C_\alpha$ and -1 everywhere else. This is similar in idealogy to just using a discriminator instead of a generative model for tasks like classification - you don't want to regenerate entire $x$ if the final task is just classification.
+Instead can we do a discriminative approach and find a function $f$ that is +1
+over some set $C_\alpha$ and -1 everywhere else. This is similar in ideology to
+just using a discriminator instead of a generative model for tasks like
+classification - you don't want to regenerate entire $x$ if the final task is
+just classification.
 
 \section{Support Vector Data Description (SVDD)}
-Given $x_1, x_2, \cdots, x_n \in \mathcal{X}$, consider the following constrained optimization problem:
+Given $\mathbf{x}_1, \mathbf{x}_2, \cdots, \mathbf{x}_n \in \mathcal{X}$, consider the following constrained optimization problem:
 \begin{align}
 \min_{R, \mathbf{c}, \boldsymbol{\gamma}} \quad & R^2 + \frac{1}{\nu n} \sum_{i=1}^{n} \gamma_i \\
 \text{subject to} \quad & \|\mathbf{x}_i - \mathbf{c} \|^2 \leq R^2 + \gamma_i, 
@@ -128,8 +145,10 @@ Given $x_1, x_2, \cdots, x_n \in \mathcal{X}$, consider the following constraine
 && i = 1, \ldots, n, \label{svdd-const2}
 \end{align}
  Where does this optimization problem arise from? We can think of $\boldsymbol{c}, R$ as the center and radius of an enclosing ball, and any test input $\boldsymbol{x}$ that lies outside this ball is deemed an outlier. 
-$$\norm{\boldsymbol{x} - \boldsymbol{c}}^2 > R^2$$
-Here $\nu_n$ is a hyperparameter that controls the impact of slack variables $\gamma$ - intuitively it is equivalent to the fraction of points outside the enclosing ball. 
+$$\norm{\boldsymbol{x} - \boldsymbol{c}}^2 > R^2$$ Here $\nu$ is a
+hyperparameter that controls the impact of slack variables $\gamma$ -
+intuitively it is equivalent to the fraction of points outside the enclosing
+ball. 
 
 We'll now look at what loss function the above problem actually minimizes and under what conditions. 
 
@@ -137,7 +156,7 @@ We'll now look at what loss function the above problem actually minimizes and un
 Ultimately, we want a solution that minimizes the following loss function
 \begin{align}
     \arg\!\min_h L(h) 
-    = \arg\!\min_h \mathbb{E}\limits_{\boldsymbol{x} \sim \mathbb{P}^+} \left[ l(h(\boldsymbol{x}), 1) \right] + \mathbb{E}\limits_{\boldsymbol{x} \sim \mathbb{P}^-} \left[ l(h(\boldsymbol{x}), -1) \right]
+    = \arg\!\min_h \mathbb{E}_{\boldsymbol{x} \sim \mathbb{P}^+} \left[ l(h(\boldsymbol{x}), 1) \right] + \mathbb{E}_{\boldsymbol{x} \sim \mathbb{P}^-} \left[ l(h(\boldsymbol{x}), -1) \right]
 \end{align}
 Since we cannot get any samples from $\mathbb{P^-}$, we typically add a regularizer to the loss function to account for the latter term. Typically the regularizer is a norm constraint (say L1 or L2 norm) on the hypothesis $h$ i.e.
 $$\hat{L_R}(h) = \frac{1}{n}\sum _{i=1} ^n l(h(\boldsymbol{x}, 1) + R(h)$$
@@ -192,7 +211,7 @@ L(\theta) = \mathbb{E}_{\boldsymbol{x} \sim \mathbb{P}^+} \left[ \frac{1}{1 + \n
 
 Setting:
 \[
-\gamma_i = \max(0, \|\boldsymbol{x}_i - \boldsymbol{c}\|^2 - R^2)
+\gamma_i \geq \max(0, \|\boldsymbol{x}_i - \boldsymbol{c}\|^2 - R^2)
 \Rightarrow
 L^+(\theta) = \frac{1}{(1+\nu)n}\sum _{i=1} ^n \gamma_i
 \]
@@ -203,7 +222,7 @@ L^+(\theta) = \frac{1}{(1+\nu)n}\sum _{i=1} ^n \gamma_i
 
 \text{Thus minimizing the upper bound on the loss, we recover the sphere optimization problem we started with}
 \[
-L_S(\theta) = R^2 + \frac{1}{\alpha n} \sum_i \gamma_i \quad \text{s.t. } \gamma_i \geq 0,\quad \gamma_i \geq \|\boldsymbol{x}_i - \boldsymbol{c}\|^2 - R^2
+L_S(\theta) = R^2 + \frac{1}{\nu n} \sum_i \gamma_i \quad \text{s.t. } \gamma_i \geq 0,\quad \gamma_i \geq \|\boldsymbol{x}_i - \boldsymbol{c}\|^2 - R^2
 \]
 
 \section{Solving the problem - Lagrangian Dual}
@@ -218,7 +237,7 @@ the \emph{Lagrangian} is
 \mathcal{L}(\mathbf{x}, \boldsymbol{\alpha}) = f_0(\mathbf{x}) + \sum_{i=1}^m \alpha_i f_i(\mathbf{x}),
 \]
 with dual variables $\alpha_i \geq 0$.  
-The \emph{dual function} is
+The \emph{Lagrange dual function} is
 \[
 g(\boldsymbol{\alpha}) = \inf_{\mathbf{x}} \, \mathcal{L}(\mathbf{x}, \boldsymbol{\alpha}),
 \]
