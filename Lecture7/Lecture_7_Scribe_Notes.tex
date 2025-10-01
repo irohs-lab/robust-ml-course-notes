@@ -8,7 +8,7 @@
             urlcolor=black]{hyperref}
 
 \newcommand{\coloneqq}{\mathrel{:=}}
-
+\usepackage{cleveref}
 % --- Header Information ---
 \course{DS603}
 \coursetitle{Robust Machine Learning}
@@ -22,23 +22,31 @@
 \maketitle
 
 \section{Distributionally Robust Optimization (DRO) Problem}
-The core problem in Distributionally Robust Optimization (DRO) is to train a model that performs well not just on the empirical distribution of the training data, but on a whole set of plausible distributions that are ``close" to it \citep{blanchet2024distributionally}. This provides a hedge against distributional shift between training and deployment. The problem is formulated as a min-max game:
+The core problem in Distributionally Robust Optimization (DRO) is to train a model that performs well not just on the empirical distribution of the training data, 
+but on a whole set of plausible distributions that are ``close" to it \cite{blanchet2024distributionally}. 
+This provides a hedge against distributional shift between training and deployment. The problem is formulated as a min-max game:
 \[
     \min_{\theta} \max_{\mathbb{Q} \in \mathcal{B}_\delta(\hat{\mathbb{P}}_N)} \mathbb{E}_{z \sim \mathbb{Q}} [\ell(z,\theta)]
 \]
 
-where the uncertainty set, $\mathcal{B}_\delta(\hat{\mathbb{P}}_N)$, is a ball of radius $\delta$ around the empirical distribution $\hat{\mathbb{P}}_N$:
+where the uncertainty set, $\mathcal{B}_\delta(\hat{\mathbb{P}}_N)$, is a ball of radius $\delta$ around the empirical distribution 
+$\hat{\mathbb{P}}_N$:
 \[
 \mathcal{B}_\delta(\hat{\mathbb{P}}_N) \coloneqq \{ \mathbb{Q}:\mathbb{D}(\mathbb{Q}, \hat{\mathbb{P}}_N)\leq \delta \}
 \]
-The choice of the distance or divergence metric $\mathbb{D}(\cdot, \cdot)$ is fundamental to the properties of the resulting robust model. The two primary choices are:
+The choice of the distance or divergence metric $\mathbb{D}(\cdot, \cdot)$ is fundamental to the properties of the resulting robust model. 
+The two primary choices are:
 \begin{enumerate}
-    \item \textbf{$\phi$-divergences:} These measure the ``information-theoretic" distance. A key property is that the uncertain distributions $\mathbb{Q}$ must be absolutely continuous with respect to $\hat{\mathbb{P}}_N$. This corresponds to \textit{re-weighting} the training samples.
-    \item \textbf{Optimal Transport:} This provides a geometric notion of distance that can compare distributions even with disjoint supports. This will be the main topic of today's lecture.
+    \item \textbf{$\phi$-divergences:} These measure the ``information-theoretic" distance. 
+    A key property is that the uncertain distributions $\mathbb{Q}$ must be absolutely continuous with respect to $\hat{\mathbb{P}}_N$. 
+    This corresponds to \textit{re-weighting} the training samples.
+    \item \textbf{Optimal Transport:} This provides a geometric notion of distance that can compare distributions even with disjoint supports. 
+    This will be the main topic of today's lecture.
 \end{enumerate}
 
 \noindent\textbf{Recap on $\phi$-divergences:}\\
-The key question from last time was: how do we measure distances between distributions with potentially overlapping support? The first answer was $\phi$-divergences.
+The key question from last time was: how do we measure distances between distributions with potentially overlapping support? 
+The first answer was $\phi$-divergences.
 
 \begin{enumerate}
     \item \textbf{Definition:} For a convex function $\phi: \mathbb{R}_+ \to \mathbb{R}$ with $\phi(1)=0$, the $\phi$-divergence is:
@@ -68,18 +76,23 @@ The key question from last time was: how do we measure distances between distrib
 
 \section{Optimal Transport for Measuring Distances}
 
-A key question arises: \textbf{How do we measure distances between distributions with disjoint supports?} \\ The $\phi$-divergence is infinite in this case, making it unsuitable. Optimal Transport (OT) provides a powerful solution by incorporating the geometry of the underlying space.
+A key question arises: \textbf{How do we measure distances between distributions with disjoint supports?} \\ 
+The $\phi$-divergence is infinite in this case, making it unsuitable. Optimal Transport (OT) provides a powerful solution by incorporating the geometry of the underlying space.
 
 \subsection{Optimal Transport Discrepancy}
 
-The core idea of Optimal Transport is to find the most efficient plan to move mass from a source distribution $P$ to a target distribution $Q$. This is often intuitively explained as the ``earth mover's distance": the minimum work required to move a pile of earth shaped like $P$ into a hole shaped like $Q$.
+The core idea of Optimal Transport is to find the most efficient plan to move mass from a source distribution $P$ to a target distribution $Q$. 
+This is often intuitively explained as the ``earth mover's distance": the minimum work required to move a pile of earth shaped like $P$ into a hole shaped like $Q$.
 
 \subsubsection*{Optimal Transport Discrepancy}
-Let $P$ and $Q$ be two probability measures on a space $Z$. Let $c: Z \times Z \to [0, \infty)$ be a non-negative, measurable cost function, representing the cost of moving a unit of mass from a point $z'$ (from $P$) to a point $z$ (to $Q$). The \textbf{Optimal Transport Discrepancy} is defined as:
+Let $P$ and $Q$ be two probability measures on a space $Z$. Let $c: Z \times Z \to [0, \infty)$ be a non-negative, measurable cost function, 
+representing the cost of moving a unit of mass from a point $z'$ (from $P$) to a point $z$ (to $Q$). 
+The \textbf{Optimal Transport Discrepancy} is defined as:
 \[
 \mathbb{D}_c(Q, P) \coloneqq \inf_{\pi \in \Pi(Q, P)} \int_{Z \times Z} c(z, z') d\pi(z, z')
 \]
-where $\Pi(Q, P)$ is the set of all joint probability measures (or ``transport plans") on $Z \times Z$ with marginals $Q$ and $P$. Let $\pi_1$ and $\pi_2$ denote the projections onto the first and second coordinates respectively. For any $\pi \in \Pi(Q, P)$, it must satisfy:
+where $\Pi(Q, P)$ is the set of all joint probability measures (or ``transport plans") on $Z \times Z$ with marginals $Q$ and $P$. 
+Let $\pi_1$ and $\pi_2$ denote the projections onto the first and second coordinates respectively. For any $\pi \in \Pi(Q, P)$, it must satisfy:
 \begin{align*}
 \pi_1(\pi) = Q \quad \text{and} \quad \pi_2(\pi) = P
 \end{align*}
@@ -88,7 +101,13 @@ This means that for any measurable set $A \subseteq Z$, we have $\pi(A \times Z)
 \noindent\textbf{Notes:}
 \begin{enumerate}
     \item While defined here on a common space $Z$, transport can also be formulated between different spaces.
-    \item When the cost function $c(\cdot, \cdot)$ is lower semi-continuous, the primal minimization problem above admits a powerful dual formulation, known as the \textbf{Kantorovich dual} \citep{kantorovich2006translocation}. This is key to making OT tractable in many settings \citep{peyre2019computational}.
+    \item When the cost function $c(\cdot, \cdot)$ is lower semi-continuous\footnote{A function $f(x)$ is lower semi-continuous at a point 
+    $x_0$ if for any sequence $x_n \to x_0$, we have $f(x_0) \le \liminf_{n\to\infty} f(x_n)$. 
+    In other words, this means the function can jump down, but not up. For the cost function $c(z, z')$, 
+    this condition ensures that if we have a sequence of transport plans whose cost converges, the limiting plan's cost will not be suddenly higher. 
+    This stability ensures the existence of an optimal plan and for strong duality to hold.}, the primal minimization problem above admits a powerful dual formulation, 
+    known as the \textbf{Kantorovich dual} \cite{kantorovich2006translocation}. 
+    This is key to making OT tractable in many settings \cite{peyre2019computational}.
 \end{enumerate}
 
 \subsection{Transport Between Discrete Distributions}
@@ -119,6 +138,15 @@ Let $d(z, z')$ be a distance metric on $Z$. For $p \ge 1$, let the cost function
 W_p(Q, P) \coloneqq \left( \mathbb{D}_{d^p}(Q, P) \right)^{1/p} = \left( \inf_{\pi \in \Pi(Q, P)} \int_{Z \times Z} d(z, z')^p d\pi(z, z') \right)^{1/p}
 \]
 
+The term ``distance" is used precisely because for $p \ge 1$, $W_p(Q, P)$ is a true \textbf{distance metric} on the space of probability measures. 
+This is a non-trivial property, meaning it satisfies the three required axioms:
+\begin{enumerate}
+    \item \textbf{Identity}: $W_p(Q, P) = 0$ if and only if $Q = P$, since zero cost implies no mass was moved.
+    \item \textbf{Symmetry}: $W_p(Q, P) = W_p(P, Q)$, as the cost of travel between two points is the same in either direction.
+    \item \textbf{Triangle Inequality}: $W_p(P, R) \le W_p(P, Q) + W_p(Q, R)$, which intuitively states that transporting mass directly from $P$ to $R$ is the most efficient path.
+\end{enumerate} 
+This property is powerful because it gives the space of distributions a geometric structure.
+
 \paragraph{Connection to Total Variation.}
 If we use the discrete metric as the cost function, $c(z, z') = \mathbf{1}(z \neq z')$, then the optimal transport cost is precisely the Total Variation (TV) distance:
 \[
@@ -127,14 +155,17 @@ If we use the discrete metric as the cost function, $c(z, z') = \mathbf{1}(z \ne
 
 \paragraph{Special Case: Uniform Measures and the Assignment Problem.}
 
-Consider two uniform discrete distributions on $N$ points: $P = \frac{1}{N} \sum_{i=1}^N \delta_{z'_i}$ and $Q = \frac{1}{N} \sum_{i=1}^N \delta_{z_i}$. The transport matrix, scaled by $N$, must be \textit{doubly stochastic} (rows and columns sum to 1). By the \textbf{Birkhoff-von Neumann theorem}, the vertices of the polytope of doubly stochastic matrices are exactly the permutation matrices (see \cite{villani2009optimal}). Since the OT objective is linear, the optimum must be achieved at a vertex. Thus, the optimal transport plan is a permutation, and the problem reduces to:
+Consider two uniform discrete distributions on $N$ points: $P = \frac{1}{N} \sum_{i=1}^N \delta_{z'_i}$ and $Q = \frac{1}{N} \sum_{i=1}^N \delta_{z_i}$. 
+The transport matrix, scaled by $N$, must be \textit{doubly stochastic} (rows and columns sum to 1). 
+By the \textbf{Birkhoff-von Neumann theorem}, the vertices of the polytope of doubly stochastic matrices are exactly the permutation matrices (see \cite{villani2009optimal}). 
+Since the OT objective is linear, the optimum must be achieved at a vertex. Thus, the optimal transport plan is a permutation, and the problem reduces to:
 \[
 \text{OT cost} = \min_{\sigma \in \text{Perm}(N)} \frac{1}{N} \sum_{i=1}^N c(z_i, z'_{\sigma(i)})
 \]
 This is the well-known \textbf{assignment problem}, which seeks the minimum cost matching between two sets of points.
 
 \section{Distributionally Robust Optimization with OT}
-\noindent\textbf{Key Question:} Is DRO tractable when using OT distances? Does it provide insights about existing methods of learning?
+\noindent Key Question: \textbf{Is DRO tractable when using OT distances? Does it provide insights about existing methods of learning?}
 
 Now we apply the concepts of OT to build the uncertainty set $\mathcal{B}$ for the DRO problem.
 
@@ -142,26 +173,42 @@ Now we apply the concepts of OT to build the uncertainty set $\mathcal{B}$ for t
 
 \begin{theorem}[\cite{duchi2018variance}]
 
-Let the uncertainty set be a $\chi^2$-divergence ball of radius $\rho$: $\mathcal{B}_\rho(\hat{\mathbb{P}}_N) = \{ Q : D_{\chi^2}(Q, \hat{\mathbb{P}}_N) \le \rho \}$. The DRO problem is equivalent to a variance-regularized empirical risk minimization:
+Let the uncertainty set be a $\chi^2$-divergence ball of radius $\rho$: $\mathcal{B}_\rho(\hat{\mathbb{P}}_N) = \{ Q : D_{\chi^2}(Q, \hat{\mathbb{P}}_N) \le \rho \}$. 
+The DRO problem is equivalent to a variance-regularized empirical risk minimization:
 \[
 \min_\theta \sup_{Q \in \mathcal{B}_\rho(\hat{\mathbb{P}}_N)} \mathbb{E}_Q[\ell(\theta, z)] = \min_\theta \left( \mathbb{E}_{\hat{\mathbb{P}}_N}[\ell(\theta, z)] + \sqrt{2\rho \cdot \text{Var}_{\hat{\mathbb{P}}_N}(\ell(\theta, z))} \right)
 \]
 \end{theorem}
 
 \begin{proof}
-Let's fix a parameter $\theta$ and let $\ell_i = \ell(\theta, z_i)$ be the loss on the $i$-th data point. Our goal is to solve the inner maximization problem: $\sup_{Q \in \mathcal{B}_\rho} \mathbb{E}_Q[\ell]$.
+Let's fix a parameter $\theta$ and let $\ell_i = \ell(\theta, z_i)$ be the loss on the $i$-th data point. Our goal is to solve the inner maximization problem: 
+$\sup_{Q \in \mathcal{B}_\rho} \mathbb{E}_Q[\ell]$. We consider two cases for the empirical variance of the loss, $\text{Var}_{\hat{\mathbb{P}}_N}(\ell)$.
 
-Let $Q$ be represented by a probability vector $\vec{q} = (q_1, \dots, q_N)$ over the $N$ data points. The empirical measure $\hat{\mathbb{P}}_N$ corresponds to the vector $\vec{p} = (\frac{1}{N}, \dots, \frac{1}{N})$. The $\chi^2$-divergence constraint is:
+\textbf{Case 1: Trivial case where $\text{Var}_{\hat{\mathbb{P}}_N}(\ell) = 0$.}
+If the variance is zero, it means the loss is constant across all data points: $\ell_i = \bar{\ell}$ for all $i=1, \dots, N$. 
+In this situation, the expected loss under any distribution $Q$ is:
+\[
+\mathbb{E}_Q[\ell] = \sum_{i=1}^N q_i \ell_i = \sum_{i=1}^N q_i \bar{\ell} = \bar{\ell} \sum_{i=1}^N q_i = \bar{\ell} = \mathbb{E}_{\hat{\mathbb{P}}_N}[\ell].
+\]
+The adversary cannot change the expected loss by re-weighting the samples. The supremum is simply $\mathbb{E}_{\hat{\mathbb{P}}_N}[\ell]$. 
+This matches the theorem's formula, since the variance term becomes $\sqrt{2\rho \cdot 0} = 0$.
+
+\textbf{Case 2: General case where $\text{Var}_{\hat{\mathbb{P}}_N}(\ell) > 0$.}
+Let $Q$ be represented by a probability vector $\vec{q} = (q_1, \dots, q_N)$ over the $N$ data points. 
+The empirical measure $\hat{\mathbb{P}}_N$ corresponds to the vector $\vec{p} = (\frac{1}{N}, \dots, \frac{1}{N})$. The $\chi^2$-divergence constraint is:
 \[
 D_{\chi^2}(Q, \hat{\mathbb{P}}_N) = \frac{1}{2} \sum_{i=1}^N p_i \left(\frac{q_i}{p_i} - 1\right)^2 = \frac{1}{2} \sum_{i=1}^N \frac{1}{N} \left(\frac{q_i}{1/N} - 1\right)^2 = \frac{N}{2} \sum_{i=1}^N \left(q_i - \frac{1}{N}\right)^2 \le \rho
 \]
 This simplifies to an L2-norm constraint on the deviation from uniform: $\|\vec{q} - \frac{1}{N}\mathbf{1}\|_2^2 \le \frac{2\rho}{N}$.
 
-The optimization problem is to maximize $\mathbb{E}_Q[\ell] = \sum_{i=1}^N q_i \ell_i = \langle \vec{q}, \vec{\ell} \rangle$ under this constraint. Let $\vec{u} = \vec{q} - \frac{1}{N}\mathbf{1}$. From $\sum q_i = 1$, we know $\sum u_i = 0$, which means $\langle \vec{u}, \mathbf{1} \rangle = 0$. We can rewrite the objective as:
+The optimization problem is to maximize $\mathbb{E}_Q[\ell] = \sum_{i=1}^N q_i \ell_i = \langle \vec{q}, \vec{\ell} \rangle$ under this constraint. 
+Let $\vec{u} = \vec{q} - \frac{1}{N}\mathbf{1}$. From $\sum q_i = 1$, we know $\sum u_i = 0$, which means $\langle \vec{u}, \mathbf{1} \rangle = 0$. 
+We can rewrite the objective as:
 \[
 \langle \vec{q}, \vec{\ell} \rangle = \left\langle \vec{u} + \frac{1}{N}\mathbf{1}, \vec{\ell} \right\rangle = \langle \vec{u}, \vec{\ell} \rangle + \frac{1}{N} \langle \mathbf{1}, \vec{\ell} \rangle = \langle \vec{u}, \vec{\ell} \rangle + \mathbb{E}_{\hat{\mathbb{P}}_N}[\ell]
 \]
-To maximize this, we must maximize $\langle \vec{u}, \vec{\ell} \rangle$. Let $\bar{\ell} = \mathbb{E}_{\hat{\mathbb{P}}_N}[\ell] = \frac{1}{N}\sum \ell_i$. Since $\langle \vec{u}, \mathbf{1} \rangle = 0$, we have $\langle \vec{u}, \bar{\ell}\mathbf{1} \rangle = \bar{\ell} \langle \vec{u}, \mathbf{1} \rangle = 0$. This allows us to center the loss vector without changing the inner product, which is a key step:
+To maximize this, we must maximize $\langle \vec{u}, \vec{\ell} \rangle$. Let $\bar{\ell} = \mathbb{E}_{\hat{\mathbb{P}}_N}[\ell] = \frac{1}{N}\sum \ell_i$. Since $\langle \vec{u}, \mathbf{1} \rangle = 0$, we have $\langle \vec{u}, \bar{\ell}\mathbf{1} \rangle = \bar{\ell} \langle \vec{u}, \mathbf{1} \rangle = 0$. 
+This allows us to center the loss vector without changing the inner product, which is a key step:
 \[
 \langle \vec{u}, \vec{\ell} \rangle = \langle \vec{u}, \vec{\ell} - \bar{\ell}\mathbf{1} \rangle
 \]
@@ -169,7 +216,8 @@ By the Cauchy-Schwarz inequality,
 \[
 \langle \vec{u}, \vec{\ell} - \bar{\ell}\mathbf{1} \rangle \le \|\vec{u}\|_2 \cdot \|\vec{\ell} - \bar{\ell}\mathbf{1}\|_2
 \]
-The maximum is achieved when $\vec{u}$ is aligned with $\vec{\ell} - \bar{\ell}\mathbf{1}$. Using the constraint $\|\vec{u}\|_2 \le \sqrt{2\rho/N}$, the maximum value of the inner product is $\sqrt{2\rho/N} \cdot \|\vec{\ell} - \bar{\ell}\mathbf{1}\|_2$.
+The maximum is achieved when $\vec{u}$ is aligned with $\vec{\ell} - \bar{\ell}\mathbf{1}$. 
+Using the constraint $\|\vec{u}\|_2 \le \sqrt{2\rho/N}$, the maximum value of the inner product is $\sqrt{2\rho/N} \cdot \|\vec{\ell} - \bar{\ell}\mathbf{1}\|_2$.
 
 Finally, we relate this back to the empirical variance:
 \[
@@ -185,78 +233,177 @@ Putting everything together, the value of the inner supremum is $\mathbb{E}_{\ha
 
 \subsection{DRO with Wasserstein Distance Uncertainty}
 
-\begin{theorem}[\cite{shafieezadeh2019regularization}]
+While DRO with $\phi$-divergence leads to variance regularization, using a Wasserstein distance uncertainty set reveals a deep connection to \textit{norm regularization}. 
+We will now prove this connection for a general class of linear models, following the result in \cite{shafieezadeh2019regularization} and the specific formulation from the lecture.
 
-Let the uncertainty set be an optimal transport ball $\mathcal{B}_\delta(\hat{\mathbb{P}}_N) = \{ Q : \mathbb{D}_c(Q, \hat{\mathbb{P}}_N) \le \delta \}$, where the discrepancy is defined by a cost function $c(\cdot, \cdot)$. The DRO problem often has a tractable dual formulation that reveals a connection to norm regularization. The key tool is the following strong duality result.
+\begin{theorem}[\cite{shafieezadeh2019regularization}]
+Consider a loss function of the form $\ell(\theta, z) = L(y, \theta^\top x)$ for $z=(x,y)$. Assume that for any fixed $y$, the function $L_y(\cdot) \coloneqq L(y, \cdot)$ is convex and $1$-Lipschitz. 
+Let the transport cost function be defined as:
+\[
+c((x,y), (x',y')) = 
+\begin{cases}
+    \|x - x'\|_q & \text{if } y=y', \\
+    +\infty & \text{if } y \neq y'.
+\end{cases}
+\]
+Let $p, q$ be dual norms where $1/p + 1/q = 1$. Then, the Wasserstein DRO problem is equivalent to a norm-regularized empirical risk minimization problem:
+\[
+\min_\theta \sup_{Q \in \mathcal{B}_\delta(\hat{\mathbb{P}}_N)} \mathbb{E}_Q[\ell(\theta, z)] = \min_\theta \left( \frac{1}{N}\sum_{i=1}^N L(y_i, \theta^\top x_i) + \delta \|\theta\|_p \right).
+\]
 \end{theorem}
 
-\begin{lemma}[Strong Duality for Wasserstein DRO]
-Let $J(z)$ be an upper semi-continuous function. Then,
+\begin{proof}
+The overall DRO problem is $\min_\theta \left( \sup_{Q \in \mathcal{B}_\delta} \mathbb{E}_Q[\ell(\theta, z)] \right)$. 
+We solve the inner maximization for a fixed $\theta$ by applying two key lemmas (proofs in Appendix).
+
+\begin{lemma}[Lemma 1: Strong Duality for Wasserstein DRO, proof in Appendix \ref{sec:lemma1}]
+For an upper semi-continuous function $J(z)$,
 \[
-\sup_{Q \in \mathcal{B}_\delta(\hat{\mathbb{P}}_N)} \mathbb{E}_Q[J(z)] = \inf_{\lambda \ge 0} \left\{ \lambda\delta + \frac{1}{N}\sum_{i=1}^N \sup_{z' \in Z} \left( J(z') - \lambda c(z', z_i) \right) \right\}
+\sup_{Q \in \mathcal{B}_\delta(\hat{\mathbb{P}}_N)} \mathbb{E}_Q[J(z)] = \inf_{\lambda \ge 0} \left\{ \lambda\delta + \frac{1}{N}\sum_{i=1}^N \sup_{z' \in Z} \left( J(z') - \lambda c(z', z_i) \right) \right\}.
 \]
 \end{lemma}
 
-\begin{proof}
+The second lemma, taken directly from the lecture notes (for the 1-Lipschitz case), solves the inner $\sup_{z'}$ term.
+\begin{lemma}[Lemma 2: Convex Analysis Result, proof in Appendix \ref{sec:lemma2}]
+Let $L(\cdot)$ be a convex and $1$-Lipschitz function, let $\theta, z \in \mathbb{R}^d$, and $\lambda > 0$. Then,
+\[
+\sup_{x \in \mathbb{R}^d} \left( L(\langle \theta, x \rangle) - \lambda \|x - z\|_q \right) = 
+\begin{cases}
+    L(\langle \theta, z \rangle) & \text{if } \|\theta\|_p \le \lambda, \\
+    +\infty & \text{otherwise}.
+\end{cases}
+\]
+\end{lemma}
 
-The primal problem is $\sup_{Q} \mathbb{E}_Q[J(z')]$ subject to $\mathbb{D}_c(Q, \hat{\mathbb{P}}_N) \le \delta$. Conceptually, we view the empirical measure $\hat{\mathbb{P}}_N$ as a \textbf{source} distribution of mass located at our data points $\{z_i\}$. An adversary chooses a \textbf{target} distribution $Q$ and a transport plan $\pi \in \Pi(Q, \hat{\mathbb{P}}_N)$ to move the mass to new locations, creating the worst-case expectation, under the budget constraint that the total transport cost does not exceed $\delta$. The problem is:
+We now prove the main theorem. Apply Lemma 1 with $J(z) = \ell(\theta, z) = L(y, \theta^\top x)$. We must solve the inner supremum from the dual form:
 \[
-\sup_{Q, \pi} \left\{ \int_{Z} J(z') dQ(z') \;\middle|\; \pi \in \Pi(Q, \hat{\mathbb{P}}_N), \;\; \int_{Z \times Z} c(z', z) d\pi(z', z) \le \delta \right\}
+\sup_{z'=(x',y')} \left( L(y', \theta^\top x') - \lambda c((x',y'), (x_i,y_i)) \right).
 \]
-Since the source measure $\hat{\mathbb{P}}_N = \frac{1}{N}\sum_i \delta_{z_i}$ is discrete, this is a \textbf{semi-discrete optimal transport} problem. Any transport plan $\pi$ with source $\hat{\mathbb{P}}_N$ can be disintegrated as:
+Due to the infinite cost in $c(\cdot, \cdot)$ when $y' \neq y_i$, a finite supremum requires $y'=y_i$. This simplifies the problem to:
 \[
-d\pi(z', z) = \frac{1}{N}\sum_{i=1}^N dQ_i(z') \delta_{z_i}(dz)
+\sup_{x' \in \mathbb{R}^d} \left( L(y_i, \theta^\top x') - \lambda \|x' - x_i\|_q \right).
 \]
+To use Lemma 2, we define a new function for each data point $i$. Let $L_{y_i}(u) \coloneqq L(y_i, u)$. This is a function of a single variable $u$. 
+By our theorem's assumption, $L_{y_i}$ is convex and 1-Lipschitz. Our expression becomes:
+\[
+\sup_{x' \in \mathbb{R}^d} \left( L_{y_i}(\theta^\top x') - \lambda \|x' - x_i\|_q \right).
+\]
+This expression now perfectly matches the form of Lemma 2, where $L$ is $L_{y_i}$, $\theta$ is $\theta$, $x$ is $x'$, and $z$ is $x_i$.
+Applying Lemma 2, the supremum evaluates to:
+\[
+\begin{cases}
+    L_{y_i}(\theta^\top x_i) & \text{if } \|\theta\|_p \le \lambda, \\
+    +\infty & \text{otherwise}.
+\end{cases}
+\]
+Substituting back the definition of $L_{y_i}$, the result is $L(y_i, \theta^\top x_i)$ if the condition holds.
 
-where each $Q_i$ is a probability measure. Intuitively, $Q_i$ represents the distribution of mass that starts at the single source point $z_i$ and is moved to the target distribution $Q$. The overall target marginal $Q$ is therefore the mixture $Q = \frac{1}{N}\sum_{i=1}^N Q_i$.
+Plugging this into the dual formulation from Lemma 1:
+\[
+\sup_{Q \in \mathcal{B}_\delta} \mathbb{E}_Q[\ell(\theta, z)] = \inf_{\lambda \ge 0} \left\{ \lambda\delta + \frac{1}{N}\sum_{i=1}^N \begin{cases} L(y_i, \theta^\top x_i) & \text{if } \|\theta\|_p \le \lambda, \\ +\infty & \text{otherwise} \end{cases} \right\}.
+\]
+To avoid an infinite result, the infimum must be taken over $\lambda$ such that $\lambda \ge \|\theta\|_p$. The objective becomes:
+\[
+\inf_{\lambda \ge \|\theta\|_p} \left\{\lambda\delta + \frac{1}{N}\sum_{i=1}^N L(y_i, \theta^\top x_i)\right\}.
+\]
+Since $\delta > 0$, this expression is linear and increasing in $\lambda$. The infimum is achieved at the smallest possible value, $\lambda^* = \|\theta\|_p$.
 
-The problem can now be rewritten in terms of the measures $\{Q_i\}$:
-\begin{align*}
-\text{maximize} \quad & \mathbb{E}_Q[J(z')] = \frac{1}{N}\sum_{i=1}^N \int_Z J(z') dQ_i(z') \\
-\text{subject to} \quad & \frac{1}{N}\sum_{i=1}^N \int_Z c(z', z_i) dQ_i(z') \le \delta \\
-& \int_Z dQ_i(z') = 1, \quad \forall i=1, \dots, N
-\end{align*}
-We now construct the Lagrangian. Let $\lambda \ge 0$ be the dual variable for the cost constraint.
-\begin{align*}
-\mathcal{L}(\{Q_i\}, \lambda) &= \frac{1}{N}\sum_i \int J(z') dQ_i(z') - \lambda \left( \frac{1}{N}\sum_i \int c(z', z_i) dQ_i(z') - \delta \right) \\
-&= \lambda\delta + \frac{1}{N}\sum_{i=1}^N \int_Z \left( J(z') - \lambda c(z', z_i) \right) dQ_i(z')
-\end{align*}
-The dual function $g(\lambda)$ is the supremum of the Lagrangian over the primal variables $\{Q_i\}$:
+Substituting $\lambda^*$ gives the value of the inner maximization:
 \[
-g(\lambda) = \sup_{\{Q_i : \int dQ_i = 1\}} \mathcal{L}(\{Q_i\}, \lambda) = \lambda\delta + \frac{1}{N}\sum_{i=1}^N \sup_{Q_i} \left\{ \int_Z \left( J(z') - \lambda c(z', z_i) \right) dQ_i(z') \right\}
+\sup_{Q \in \mathcal{B}_\delta} \mathbb{E}_Q[\ell(\theta, z)] = \delta \|\theta\|_p + \frac{1}{N}\sum_{i=1}^N L(y_i, \theta^\top x_i).
 \]
-The suprema over each $Q_i$ are independent. To maximize the integral $\int_Z f(z') dQ_i(z')$ for a probability measure $Q_i$, we must place all mass at the point $z'^*$ that maximizes $f(z')$. Therefore:
+Plugging this into the full DRO problem gives the final result:
 \[
-\sup_{Q_i} \int_Z \left( J(z') - \lambda c(z', z_i) \right) dQ_i(z') = \sup_{z' \in Z} \left( J(z') - \lambda c(z', z_i) \right)
+\min_\theta \left( \frac{1}{N}\sum_{i=1}^N L(y_i, \theta^\top x_i) + \delta \|\theta\|_p \right).
 \]
-The dual problem is to minimize the dual function $g(\lambda)$ over $\lambda \ge 0$:
-\[
-\inf_{\lambda \ge 0} g(\lambda) = \inf_{\lambda \ge 0} \left\{ \lambda\delta + \frac{1}{N}\sum_{i=1}^N \sup_{z' \in Z} \left( J(z') - \lambda c(z', z_i) \right) \right\}
-\]
-Strong duality holds under mild conditions, which concludes the proof. This result transforms an intractable optimization over measures into a much simpler, one-dimensional optimization over $\lambda$.
+This completes the proof.
 \end{proof}
-
-% \section{Summary and Interpretation}
-% This lecture provides two powerful perspectives on distributionally robust optimization, hinging on the choice of distance metric for the uncertainty set.
-
-% \begin{itemize}
-%     \item \textbf{DRO with $\phi$-Divergence:} The adversary is constrained to only \textbf{re-weight} the existing training samples $\{z_i\}$. The worst-case distribution $Q$ will up-weight the samples with high loss and down-weight those with low loss. This leads to an elegant connection with \textbf{variance regularization}. The model is penalized not just for its average loss, but also for the variability of its loss across the training data.
-
-%     \item \textbf{DRO with Wasserstein Distance:} The adversary is allowed to \textbf{move} or \textbf{perturb} the training samples to new locations in the feature space, subject to a total "work" budget $\delta$. The worst-case distribution $Q$ is formed by shifting the data points in directions that maximally increase the loss. This provides a geometric form of robustness and, in many important cases (e.g., for linear models), is equivalent to \textbf{norm regularization} (like Ridge or LASSO) on the model parameters $\theta$. The strong duality lemma is the key to unlocking this connection and making the problem tractable.
-% \end{itemize}
-
-% In essence, these two frameworks provide a principled, probabilistic interpretation for two of the most common regularization strategies in machine learning: variance penalization and parameter norm regularization.
 
 \section{Summary and Interpretation}
 
-In this lecture, we looked at two different ways to approach distributionally robust optimization (DRO), depending on how we define the "distance" between probability distributions. Each method gives a different way of thinking about robustness and regularization.
-
+In this lecture, we explored two different approaches to distributionally robust optimization (DRO), based on how we measure the ``distance" between probability distributions. Each 
+approach offers a unique perspective on robustness and regularization.
 \begin{itemize}
-    \item \textbf{DRO with $\phi$-Divergence:} In this setup, the adversary can only reweight the existing training data, so it's like adjusting the importance of each sample. The worst-case distribution ends up focusing more on the data points where the model performs poorly. This leads to something similar to adding a variance penalty - the model isn't just minimizing the average loss, but is also being pushed to have more consistent performance across samples.
-    \item \textbf{DRO with Wasserstein Distance:} Here, the adversary is allowed to actually move the data points around in the input space (within some limit). This means the model needs to be robust to small changes in the data. In some cases, especially with linear models, this ends up being equivalent to adding regularization on the parameters, like L2 or L1 norm penalties. The connection comes from a duality result that makes this problem more manageable.
+    \item \textbf{DRO with $\phi$-Divergence:} In this setup, the adversary can only reweight the existing training data, so it's like adjusting the importance of each sample. 
+    The worst-case distribution ends up focusing more on the data points where the model performs poorly. 
+    This leads to something similar to adding a variance penalty - the model isn't just minimizing the average loss, but is also being pushed to have more consistent performance across samples.
+    \item \textbf{DRO with Wasserstein Distance:} Here, the adversary is allowed to actually move the data points around in the input space (within some limit). 
+    This means the model needs to be robust to small changes in the data. In some cases, especially with linear models, 
+    this ends up being equivalent to adding regularization on the parameters, like L2 or L1 norm penalties. 
+    The connection comes from a duality result that makes this problem more manageable.
 \end{itemize}
 So overall, both of these DRO approaches help explain why common regularization techniques (like variance regularization or norm penalties) actually make sense from a probabilistic point of view.
 \bibliographystyle{plain}
 \bibliography{refs}
+\newpage
+\begin{appendix}
 
+\section{Proofs of Lemmas}
+
+\subsection{Proof of Lemma 1 (Strong Duality)}\label{sec:lemma1} 
+The primal problem is $\sup_{Q} \mathbb{E}_Q[J(z')]$ subject to $\mathbb{D}_c(Q, \hat{\mathbb{P}}_N) \le \delta$. 
+We view the empirical measure $\hat{\mathbb{P}}_N$ as a \textbf{source} distribution. 
+An adversary chooses a \textbf{target} distribution $Q$ and a transport plan $\pi \in \Pi(Q, \hat{\mathbb{P}}_N)$ to move the mass to new locations under a cost budget $\delta$. 
+The problem is:
+\[
+\sup_{Q, \pi} \left\{ \int_{Z} J(z') dQ(z') \;\middle|\; \pi \in \Pi(Q, \hat{\mathbb{P}}_N), \;\; \int_{Z \times Z} c(z', z) d\pi(z', z) \le \delta \right\}
+\]
+Since the source measure $\hat{\mathbb{P}}_N = \frac{1}{N}\sum_i \delta_{z_i}$ is discrete, this is a \textbf{semi-discrete optimal transport} problem. 
+Any transport plan $\pi$ with source $\hat{\mathbb{P}}_N$ can be disintegrated as $d\pi(z', z) = \frac{1}{N}\sum_{i=1}^N dQ_i(z') \delta_{z_i}(dz)$, 
+where each $Q_i$ is a probability measure representing the distribution of mass that starts at $z_i$. The overall target marginal is the mixture $Q = \frac{1}{N}\sum_{i=1}^N Q_i$.
+
+The problem can be rewritten in terms of the measures $\{Q_i\}$:
+\begin{align*}
+\text{maximize} \quad & \mathbb{E}_Q[J(z')] = \frac{1}{N}\sum_{i=1}^N \int_Z J(z') dQ_i(z') \\
+\text{subject to} \quad & \frac{1}{N}\sum_{i=1}^N \int_Z c(z', z_i) dQ_i(z') \le \delta, \quad \text{and} \quad \int_Z dQ_i(z') = 1, \; \forall i.
+\end{align*}
+We construct the Lagrangian with dual variable $\lambda \ge 0$:
+\begin{align*}
+\mathcal{L}(\{Q_i\}, \lambda) &= \frac{1}{N}\sum_i \int J(z') dQ_i(z') - \lambda \left( \frac{1}{N}\sum_i \int c(z', z_i) dQ_i(z') - \delta \right) \\
+&= \lambda\delta + \frac{1}{N}\sum_{i=1}^N \int_Z \left( J(z') - \lambda c(z', z_i) \right) dQ_i(z')
+\end{align*}
+The dual function $g(\lambda) = \sup_{\{Q_i\}} \mathcal{L}(\{Q_i\}, \lambda)$. Since the suprema over each $Q_i$ are independent, we solve them individually. 
+To maximize $\int f(z') dQ_i(z')$ for a probability measure $Q_i$, we must place all mass at the point $z'^*$ that maximizes $f(z')$. Therefore:
+\[
+\sup_{Q_i} \int_Z \left( J(z') - \lambda c(z', z_i) \right) dQ_i(z') = \sup_{z' \in Z} \left( J(z') - \lambda c(z', z_i) \right)
+\]
+The dual problem is $\inf_{\lambda \ge 0} g(\lambda)$, which gives the lemma's result. Strong duality holds under mild conditions.
+\newpage
+\subsection{Proof of Lemma 2 (Convex Analysis Result)}\label{sec:lemma2}
+We want to solve $\sup_{x \in \mathbb{R}^d} \left( L(\langle \theta, x \rangle) - \lambda \|x - z\|_q \right)$, where $L$ is a 1-Lipschitz convex function.
+
+From the 1-Lipschitz property of $L$, we have $L(\langle \theta, x \rangle) - L(\langle \theta, z \rangle) \le |\langle \theta, x \rangle - \langle \theta, z \rangle| = |\langle \theta, x - z \rangle|$.
+Using Holder's inequality on the right-hand side, we get $|\langle \theta, x - z \rangle| \le \|\theta\|_p \|x - z\|_q$.
+Combining these two inequalities gives us an upper bound on $L(\langle \theta, x \rangle)$:
+\[
+L(\langle \theta, x \rangle) \le L(\langle \theta, z \rangle) + \|\theta\|_p \|x - z\|_q.
+\]
+Now we analyze the expression to be maximized.
+
+\textbf{Case 1: $\|\theta\|_p \le \lambda$}.
+Substitute the upper bound into the expression:
+\begin{align*}
+L(\langle \theta, x \rangle) - \lambda \|x - z\|_q &\le \left( L(\langle \theta, z \rangle) + \|\theta\|_p \|x - z\|_q \right) - \lambda \|x - z\|_q \\
+&= L(\langle \theta, z \rangle) - (\lambda - \|\theta\|_p) \|x - z\|_q.
+\end{align*}
+Since $\lambda - \|\theta\|_p \ge 0$ and $\|x-z\|_q \ge 0$, the second term is always non-positive. 
+The entire expression is therefore maximized when this term is zero, which happens at $x=z$. At this point, the value is $L(\langle \theta, z \rangle)$.
+
+\textbf{Case 2: $\|\theta\|_p > \lambda$}.
+Let $\epsilon = \|\theta\|_p - \lambda > 0$. By the definition of the dual norm, there exists a vector $v_0$ with $\|v_0\|_q=1$ such that $\langle \theta, v_0 \rangle = \|\theta\|_p$.
+Let us choose a direction of perturbation $x = z + \alpha v_0$ for some scalar $\alpha > 0$. Then $\|x-z\|_q = \alpha$.
+The expression becomes:
+\[
+L(\langle \theta, z + \alpha v_0 \rangle) - \lambda \alpha = L(\langle \theta, z \rangle + \alpha \langle \theta, v_0 \rangle) - \lambda \alpha = L(\langle \theta, z \rangle + \alpha \|\theta\|_p) - \lambda \alpha.
+\]
+By convexity, for any $s_1, s_2$ and subgradient $g$ of $L$ at $s_2$, we have $L(s_1) \ge L(s_2) + g(s_1-s_2)$. 
+The 1-Lipschitz condition implies there exists a subgradient $g \in [-1, 1]$. We can use this property to establish a lower bound. 
+For large $\alpha$, the argument inside $L$ grows, and the function's value is lower bounded by a line with slope 1:
+\begin{align*}
+L(\langle \theta, z \rangle + \alpha \|\theta\|_p) - \lambda \alpha &\ge L(\langle \theta, z \rangle) + 1 \cdot (\alpha \|\theta\|_p) - \lambda \alpha \\
+&= L(\langle \theta, z \rangle) + \alpha (\|\theta\|_p - \lambda) \\
+&= L(\langle \theta, z \rangle) + \alpha \epsilon.
+\end{align*}
+As $\alpha \to \infty$, this term goes to $+\infty$. Therefore, the supremum is $+\infty$.
+\end{appendix}
 \end{document}
