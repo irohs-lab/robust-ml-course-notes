@@ -1,0 +1,118 @@
+@book{ref:BonShap2013,
+  title={Perturbation {A}nalysis of {O}ptimization {P}roblems},
+  author={F. J. Bonnans and A. Shapiro},
+  year={2013},
+  publisher={Springer Science \& Business Media}
+}
+
+
+@article{ref:cornet1986lipschitzian,
+  title={Lipschitzian solutions of perturbed nonlinear programming problems},
+  author={B. Cornet and J.-PH. Vial},
+  journal={SIAM {J}ournal on {C}ontrol and {O}ptimization},
+  volume={24},
+  number={6},
+  pages={1123--1137},
+  year={1986},
+  publisher={SIAM}
+}
+
+@article{10.1145/3585385,
+author = {Cin\`{a}, Antonio Emanuele and Grosse, Kathrin and Demontis, Ambra and Vascon, Sebastiano and Zellinger, Werner and Moser, Bernhard A. and Oprea, Alina and Biggio, Battista and Pelillo, Marcello and Roli, Fabio},
+title = {Wild Patterns Reloaded: A Survey of Machine Learning Security against Training Data Poisoning},
+year = {2023},
+issue_date = {December 2023},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {55},
+number = {13s},
+issn = {0360-0300},
+url = {https://doi.org/10.1145/3585385},
+doi = {10.1145/3585385},
+abstract = {The success of machine learning is fueled by the increasing availability of computing power and large training datasets. The training data is used to learn new models or update existing ones, assuming that it is sufficiently representative of the data that will be encountered at test time. This assumption is challenged by the threat of poisoning, an attack that manipulates the training data to compromise the model’s performance at test time. Although poisoning has been acknowledged as a relevant threat in industry applications, and a variety of different attacks and defenses have been proposed so far, a complete systematization and critical review of the field is still missing. In this survey, we provide a comprehensive systematization of poisoning attacks and defenses in machine learning, reviewing more than 100 papers published in the field in the past 15 years. We start by categorizing the current threat models and attacks and then organize existing defenses accordingly. While we focus mostly on computer-vision applications, we argue that our systematization also encompasses state-of-the-art attacks and defenses for other data modalities. Finally, we discuss existing resources for research in poisoning and shed light on the current limitations and open research questions in this research field.},
+journal = {ACM Comput. Surv.},
+month = jul,
+articleno = {294},
+numpages = {39},
+keywords = {computer security, computer vision, machine learning, backdoor attacks, Poisoning attacks}
+}
+
+@article{10.1007/s10994-021-06119-y,
+author = {Koh, Pang Wei and Steinhardt, Jacob and Liang, Percy},
+title = {Stronger data poisoning attacks break data sanitization defenses},
+year = {2022},
+issue_date = {Jan 2022},
+publisher = {Kluwer Academic Publishers},
+address = {USA},
+volume = {111},
+number = {1},
+issn = {0885-6125},
+url = {https://doi.org/10.1007/s10994-021-06119-y},
+doi = {10.1007/s10994-021-06119-y},
+abstract = {Machine learning models trained on data from the outside world can be corrupted by data poisoning attacks that inject malicious points into the models’ training sets. A common defense against these attacks is data sanitization: first filter out anomalous training points before training the model. In this paper, we develop three attacks that can bypass a broad range of common data sanitization defenses, including anomaly detectors based on nearest neighbors, training loss, and singular-value decomposition. By adding just 3\% poisoned data, our attacks successfully increase test error on the Enron spam detection dataset from 3 to 24\% and on the IMDB sentiment classification dataset from 12 to 29\%. In contrast, existing attacks which do not explicitly account for these data sanitization defenses are defeated by them. Our attacks are based on two ideas: (i) we coordinate our attacks to place poisoned points near one another, and (ii) we formulate each attack as a constrained optimization problem, with constraints designed to ensure that the poisoned points evade detection. As this optimization involves solving an expensive bilevel problem, our three attacks correspond to different ways of approximating this problem, based on influence functions; minimax duality; and the Karush–Kuhn–Tucker (KKT) conditions. Our results underscore the need to develop more robust defenses against data poisoning attacks.},
+journal = {Mach. Learn.},
+month = jan,
+pages = {1–47},
+numpages = {47},
+keywords = {Security, Anomaly detection, Data sanitization, Data poisoning}
+}
+
+@inproceedings{NIPS2013_3871bd64,
+ author = {Natarajan, Nagarajan and Dhillon, Inderjit S and Ravikumar, Pradeep K and Tewari, Ambuj},
+ booktitle = {Advances in Neural Information Processing Systems},
+ editor = {C.J. Burges and L. Bottou and M. Welling and Z. Ghahramani and K.Q. Weinberger},
+ pages = {},
+ publisher = {Curran Associates, Inc.},
+ title = {Learning with Noisy Labels},
+ url = {https://proceedings.neurips.cc/paper_files/paper/2013/file/3871bd64012152bfb53fdf04b401193f-Paper.pdf},
+ volume = {26},
+ year = {2013}
+}
+
+@INPROCEEDINGS {9157782,
+author = { Kolouri, Soheil and Saha, Aniruddha and Pirsiavash, Hamed and Hoffmann, Heiko },
+booktitle = { 2020 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) },
+title = {{ Universal Litmus Patterns: Revealing Backdoor Attacks in CNNs }},
+year = {2020},
+volume = {},
+ISSN = {},
+pages = {298-307},
+abstract = { The unprecedented success of deep neural networks in many applications has made these networks a prime target for adversarial exploitation. In this paper, we introduce a benchmark technique for detecting backdoor attacks (aka Trojan attacks) on deep convolutional neural networks (CNNs). We introduce the concept of Universal Litmus Patterns (ULPs), which enable one to reveal backdoor attacks by feeding these universal patterns to the network and analyzing the output (i.e., classifying the network as `clean' or `corrupted'). This detection is fast because it requires only a few forward passes through a CNN. We demonstrate the effectiveness of ULPs for detecting backdoor attacks on thousands of networks with different architectures trained on four benchmark datasets, namely the German Traffic Sign Recognition Benchmark (GTSRB), MNIST, CIFAR10, and Tiny-ImageNet. The codes and train/test models for this paper can be found here: https://umbcvision.github.io/Universal-Litmus-Patterns/. },
+keywords = {Training;Perturbation methods;Data models;Computational modeling;Machine learning;Benchmark testing;Computer vision},
+doi = {10.1109/CVPR42600.2020.00038},
+url = {https://doi.ieeecomputersociety.org/10.1109/CVPR42600.2020.00038},
+publisher = {IEEE Computer Society},
+address = {Los Alamitos, CA, USA},
+month =Jun}
+
+@inproceedings{
+li2021neural,
+title={Neural Attention Distillation: Erasing Backdoor Triggers from Deep Neural Networks},
+author={Yige Li and Xixiang Lyu and Nodens Koren and Lingjuan Lyu and Bo Li and Xingjun Ma},
+booktitle={International Conference on Learning Representations},
+year={2021},
+url={https://openreview.net/forum?id=9l0K4OM-oXE}
+}
+
+@misc{zeng2022adversarialunlearningbackdoorsimplicit,
+      title={Adversarial Unlearning of Backdoors via Implicit Hypergradient}, 
+      author={Yi Zeng and Si Chen and Won Park and Z. Morley Mao and Ming Jin and Ruoxi Jia},
+      year={2022},
+      eprint={2110.03735},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2110.03735}, 
+}
+
+@inproceedings {281308,
+author = {Shawn Shan and Arjun Nitin Bhagoji and Haitao Zheng and Ben Y. Zhao},
+title = {Poison Forensics: Traceback of Data Poisoning Attacks in Neural Networks},
+booktitle = {31st USENIX Security Symposium (USENIX Security 22)},
+year = {2022},
+isbn = {978-1-939133-31-1},
+address = {Boston, MA},
+pages = {3575--3592},
+url = {https://www.usenix.org/conference/usenixsecurity22/presentation/shan},
+publisher = {USENIX Association},
+month = aug
+}
