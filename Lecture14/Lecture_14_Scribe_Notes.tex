@@ -1,0 +1,239 @@
+% -----------------------------*- LaTeX -*------------------------------
+\documentclass[11pt]{report}
+\usepackage{scribe_ds603}
+\begin{document}
+
+
+\scribe{Pranav Bhagwat}		% required
+\lecturenumber{14}			% required, must be a number
+\lecturedate{Oct 10}		% required, omit year
+
+\maketitle
+
+% ----------------------------------------------------------------------
+\section{Theorem Statement} 
+If $g_{\vec{x}}(\vec{x}_t)$ has gradients that are L-Lipschitz (L-smooth)
+then
+$$
+\cos \angle (\mathbb{E}[\tilde{\nabla} g_{\vec{x}}(\vec{x}_t, b)], \nabla g_{\vec{x}}(\vec{x}_t)) \ge 1 - \frac{9L^2 b^2 d^2}{8||\nabla g_{\vec{x}}(\vec{x}_t)||_2^2},
+$$
+and as $b \to 0$, the angle tends to 0, if $\vec{x}_t \in boundary(g_{\vec{x}})$,
+
+\section*{Key question}
+Why is the estimate of the gradient defined solely using the decision information reasonable?
+\section*{Proof idea}
+The main idea is to show that the probability of the event where the sign of the function
+$g(\: .)$ is \emph{not} a good indicator of the projection of its gradient along a random direction is small. \\
+This proof is taken from \textbf{HopSkipJumpAttack paper} \cite{chen2020hopskipjumpattack}.
+
+%provided the smoothing radius $b$ is chosen appropriately. In other words, except on a small set
+%of directions $u$, the sign of the perturbed function corresponds to the sign of the directional derivative
+%$\nabla g(\tilde{x})^\top u$.
+
+
+\section{Proof of Theorem}
+We use a gradient estimate based on sign decisions along random directions. For an iterate $x_t$
+and radius $b$ let us define
+\begin{equation}
+\label{eq:grad-est}
+\widehat{\nabla} g_{\vec{x}}(\vec{x_t}, b) := \frac{1}{k} \sum_{k=1}^k \psi_{\vec{x_t}} (\vec{x_t} + b \vec{u_k})\,\vec{u_k},
+\end{equation}
+
+To bound the expectation of this gradient with respect to the random unit direction $\vec{u_k} \sim S^{d-1} $,  let us consider a single unit vector $\vec{u}$ (with $||\vec{u}||=1$).\\
+\textbf{Why?: }The estimator is an average over independent random directions, so to bound the expectation it is enough to analyze one randomly drawn unit direction.
+
+
+\subsection*{Taylor expansion of the perturbed function}
+By Taylor's theorem,
+\begin{equation}\label{eq:taylor}
+g(\vec{x}+b \vec{u}) = b\,\nabla g(\vec{x_t})^\top \vec{u} + \frac{b^2}{2} \vec{u}^\top \nabla^2 g(\vec{x_t})\,\vec{u} ,\;(\verb|since | g(\vec{x})=0) 
+\end{equation}
+As  the gradient of $g$ is $L$--Lipschitz,
+then the remainder term satisfies
+\[\left|\tfrac{b^2}{2} \vec{u}^\top \nabla^2 g(\vec{x_t})\,\vec{u}\right| \le \tfrac{1}{2} L b^2.
+\]
+Thus the linear term dominates the perturbation whenever $|\nabla g(\vec{x_t})^\top \vec{u}| > \tfrac{1}{2}Lb$.
+Consequently,
+\begin{align*}
+\text{If } \nabla g(\vec{x})^\top \vec{u} > \tfrac{1}{2} L b 
+&\implies g(\vec{x} + b \vec{u}) > 0 
+\quad \text{and} \quad 
+\psi(\vec{x} + b \vec{u}) = +1, \\
+\text{If } \nabla g(\vec{x})^\top \vec{u} < -\tfrac{1}{2} L b 
+&\implies g(\vec{x} + b \vec{u}) < 0 
+\quad \text{and} \quad 
+\psi(\vec{x} + b \vec{u}) = -1.
+\end{align*}
+Therefore the decision $\psi(g(\vec{x}+b \vec{u}))$ correctly reflects the sign of the directional derivative in extreme case, but not in centre case when $|\nabla g(\vec{x})^\top u| \le \tfrac{1}{2} L b$. We call this the \emph{ambiguous} set of directions.
+
+
+Let's define the following events for a fixed iterate $\vec{x}$ and vector $\vec{u}$:
+\begin{align*}
+E_1 &:= \{\,\nabla g(\vec{x_t})^\top \vec{u} > \tfrac{1}{2} L b\,\},\\
+E_2 &:= \{\,|\nabla g(\vec{x})^\top \vec{u}| \le \tfrac{1}{2} L b\,\},\\
+E_3 &:= \{\,\nabla g(\vec{x})^\top \vec{u} < -\tfrac{1}{2} L b\,\}.
+\end{align*}
+On $E_1$ and $E_3$ the sign of $g(\vec{x}+b \vec{u})$ matches the sign of $\nabla g(\vec{x})^\top u$.
+The only problematic directions belong to $E_2$.
+
+
+\subsection*{Orthonormal-basis decomposition}
+Let us fix an orthonormal basis to simplify things. \\
+Fix \(\vec{v_1} = \frac{\nabla g(\vec{x_t})}{\|\nabla g(\vec{x_t})\|_2}\), 
+and choose $\{\vec{v_i}\}_{i=1}^d$ to be appropriately orthonormal.
+Then \[\vec{u} = \sum_{i=1}^d r_i v_i,\qquad\text{where}\; \vec{r} \sim S^{d-1}\]\\
+\textbf{Why?: }As $v$ is unit vector and has orthonormal components, when it is multiplied with any $\vec{r}$ then it can generate any $\vec{u}$
+In this basis we have
+\[\nabla g(\vec{x})^\top \vec{u}= \vec{r_1}\nabla g(\vec{x})^\top \vec{v_1} = \vec{r_1}\|\nabla g(\vec{x_t})\|_2\,.\]
+%Thus the ambiguous event $|\nabla g(\tilde{x})^\top u| \le \tfrac{1}{2} L b$ becomes
+\\
+Recall, we want to lower bound $cos \angle([E[\widehat{\nabla} g_{\vec{x}}(\vec{x_t}, b)], \nabla g_{\vec{x_t}}(\vec{x_t})] )$,\\
+Instead of that  we could upper-bound
+\[ \| E[ \widehat{\nabla} g_{\vec{x_t}}(\vec{x_t}, b) ] - \nabla g_{\vec{x_t}}(\vec{x_t}) \|_2  \] \\
+\textbf{Why?: } By using the identity
+\[
+\cos \angle(a,b) = \frac{\|a\|^2 + \|b\|^2 - \|a - b\|^2}{2\,\|a\|\,\|b\|}
+\]
+Upper bounding $\|a - b\|$ will give a lower bound on $\cos$ and will also be algebraically simpler.
+\\
+
+Consider 
+\[E[ |r_1|\vec{v_1} ] = \vec{v_1}E[ r_1 ]= \frac{\nabla g(\vec{x_t})}{\|\nabla g(\vec{x_t})\|_2} E[|r_1|]\]
+
+\[\Rightarrow \frac{\nabla g(\vec{x_t})}{\|\nabla g(\vec{x_t})\|_2}= \frac{E[|r_1|v_1]}{E[|r_1|]}\] 
+
+
+So, if we can bound the following by some \(\rho'\):
+\[
+\| E[ \psi_{\vec{x}}\:( \vec{x_t} + b\vec{u} ) \;\vec{u} ] - E[| \vec{r_1}|\vec{v_1} ] \|_2 \le \rho'
+\]
+
+\[\implies
+\| E[ \psi_{\vec{x}}( \vec{x_t}+b\vec{u} ) \;\vec{u} ] - r\nabla g(\vec{x_t})\|_2  \le \rho' (\text{\textbf{r} is random})
+\tag{1}
+\]
+
+and recalling, \(\|\vec{a}-r\vec{b}\|^2 = \|\vec{a}\|^2 + r^2\|\vec{b}\|^2 - 2r||\vec{a}||_2||\vec{b}||_2 \cos \angle(\vec{a},\vec{b}) \) \\
+As in our case,
+\[||\vec{a}-r\vec{b}||^2_2 \le (\rho')^2\]
+so
+\[ \cos\angle(\vec{a},\vec{b}) \ge \frac{\|\vec{a}\|^2 + r^2\|\vec{b}\|^2 - (\rho')^2}{2r\|\vec{a}\|\|\vec{b}\|}\]
+
+In our case, $r=E[|\vec{r_1}|]$, and $||\vec{b}||=1$,
+
+\[
+\Rightarrow \cos\angle(\vec{a},\vec{b}) \ge \frac{||\vec{a}||^2+r^2-(\rho ')^2}{2r||\vec{a}||} \ge 1 - \tfrac{1}{2}(\tfrac{\rho'}{r})^2 \quad (\text{when } \|\vec{a}\| \ge 
+r )
+\tag{2}
+\]
+
+Therefore above equation (2) will hold if \[ \| E[ \psi_{\vec{x}}(\vec{x_t} + b\vec{u}) \: \vec{u} ] \|_2 \ge E[ |r_1|]\]
+
+Now, we need to determine what \(\rho'\) is, and verify that above equation (2) holds. \\
+As defined earlier,
+\begin{align*}
+E_1 &:= \{\,\nabla g(\vec{x_t})^\top \vec{u} > \tfrac{1}{2} L b\,\},\\
+E_2 &:= \{\,|\nabla g(\vec{x_t})^\top \vec{u}| \le \tfrac{1}{2} L b\,\},\\
+E_3 &:= \{\,\nabla g(\vec{x_t})^\top \vec{u} < -\tfrac{1}{2} L b\,\}
+\end{align*}
+
+
+In the basis that we have, $E_1 \iff \nabla g(\vec{x}) \sum r_i v_i > w \iff
+ r_1\|\nabla g(\vec{x})\|_2 > w$
+
+
+Note also that $E_1 \implies \psi_{\vec{x}}(\vec{x_t} + b\vec{u} ) = 1$.
+
+\subsection{Bounding the expectation}
+Now consider
+\[
+ \, \mathbb{E}[\psi_{\vec{x}}(\vec{x_t} + b\vec{u})\,\vec{u}] \,
+= \rho \,\mathbb{E}[\,\psi_{\vec{x}}\mid E_2\,] + \frac{1-\rho}{2}\,\mathbb{E}[ \psi_{\vec{x}}\,\mid E_1 \,] + \frac{1-\rho}{2}\,\mathbb{E}[ \psi_{\vec{x}} \mid E_3 \,]
+\]
+
+as, 
+\[\mathbb{E}[ \psi_{\vec{x}}\:\vec{u}\,\mid E_1 \,]=\mathbb{E}[ \Sigma_i\;r_i\vec{v_i}\,\mid E_1]
+= \mathbb{E}[r_1\;\vec{v_1}|E_1]\]
+\[\therefore \mathbb{E}[\psi_{\vec{x}}\: \vec{u}] = \rho \left( \mathbb{E}[\psi_{\vec{x}} | E_2] - \frac{1}{2} \mathbb{E}[r_1 \vec{v_1} | E_1] - \frac{1}{2} \mathbb{E}[-r_1 \vec{v_1} | E_3] \right) \\
++ \frac{1}{2} \mathbb{E}[r_1\vec{v_1} | E_1] + \frac{1}{2} \mathbb{E}[-r_1\vec{v_1} | E_3]\]
+
+Now consider
+\[
+\mathbb{E}[|r_1|\vec{v_1}] = \frac{1}{2} \mathbb{E}[r_1\vec{v_1}| r_1 > 0] + \frac{1}{2} \mathbb{E}[-r_1\vec{v_1} | r_1 < 0]\]
+\[\mathbb{E}[\psi_{\vec{x}} \vec{u}] = \rho \left( \mathbb{E}[\psi_{\vec{x}} | E_2] - \frac{1}{2} \mathbb{E}[r_1\vec{v_1}| E_1] - \frac{1}{2} \mathbb{E}[-r_1\vec{v_1} | E_3] \right) \\
++ \frac{1}{2} \mathbb{E}[r_1\vec{v_1}| E_1] + \frac{1}{2} \mathbb{E}[-r_1\vec{v_1} | E_3]\]
+
+Using the triangle inequality and the fact that norms of each expectation are bounded from above by $1$,
+we obtain
+\[
+\big\| \mathbb{E}[\psi_{\vec{x}} \vec{u}] - \mathbb{E}[|r_1|\vec{v_1}] \big\|_2
+\le \rho + 2\rho = 3\rho
+\]
+
+
+
+therefore $\rho' = 3\rho$, where 
+\[\rho =  \mathbb{P} \left[ |\nabla g(\vec{x_t})^\top u| < \frac{1}{2} Lb \right] \\
+= \mathbb{P} \left[ r_1^2 \le \frac{(\frac{1}{2} Lb)^2}{||\nabla g(\vec{x_t})||_2^2} \right]
+\]
+
+ Note: Each element of a unit random vector defined over the unit sphere follows a beta distribution, i.e.,
+\[ r_i^2 \sim \text{Beta}(p, q) = \frac{1}{\text{beta}(p, q)} x^{p-1} (1-x)^{q-1}\]
+
+with 
+$p = \frac{1}{2}, q = \frac{d-1}{2}.$
+
+\subsubsection*{About Beta distribution}
+The Beta distribution is a continuous probability distribution defined on the interval $x \in [0,1]$. 
+It is parameterized by two positive parameters $p$ and $q$, which control the shape of the distribution.
+
+
+\begin{align*}
+\beta(x) &= \frac{\Gamma(p+q)}{\Gamma(p)\,\Gamma(q)}\,x^{p-1}(1-x)^{q-1} \\[6pt]
+     &= \frac{1}{beta(p,q)}\,x^{p-1}(1-x)^{q-1}, \qquad 0 \le x \le 1,
+\end{align*}
+
+\[
+beta(p,q) \;=\; \int_{0}^{1} x^{p-1}(1-x)^{q-1}\,dx
+\]
+
+\medskip
+Here, $\Gamma(\cdot)$ denotes the Gamma function, which generalizes the factorial:
+$\Gamma(n) = (n-1)!$ for any positive integer $n$. 
+The beta function serves as a normalization constant ensuring that the total probability integrates to 1.
+\subsection{Continuing the proof}
+For small  $t$,  $\mathbb{P}[X \le t]$ for a beta distribution,  $Beta (\frac{1}{2}, \frac{d-1}{2})$ 
+can be upper bounded as
+\[
+\frac{\sqrt{t}}{\text{beta}(p, q)}
+\]
+\textbf{What other assumption do we need? Why is this true?}\\ We need to assume that t is small, formally $0<t<<1$. We also assume that $(q-1)>0$ or equivalently, on putting $q=\frac{d-1}{2}$, we assumme that $d>3$ which is true for high dimensions.\\
+Under these assumptions, the term of Beta distribution, $(1-x)^{q-1}$ can be approximated as $1$, and remaining terms give the above bound.
+
+therefore 
+\[
+\rho \le \frac{2(\frac{1}{2} Lb)}{\text{beta}(\frac{1}{2}, \frac{d-1}{2}) ||\nabla g(\vec{x}_t)||_2}\]
+
+Plugging everything back into equation (2), we get
+
+\[\cos \angle (\mathbb{E}[\psi_{\vec{x}}(\vec{x}_t + b\vec{u})\:\vec{u}], \nabla g(\vec{x}_t)) \ge 1 - \frac{1}{2} \left(\frac{p'}{r}\right)^2 \]
+
+\begin{align*}
+\text{RHS: } 1 - \frac{1}{2} \left(\frac{\rho'}{r}\right)^2 &= 1 - \frac{1}{2} \left( \frac{3\rho}{\mathbb{E}[|r_1|]} \right)^2 \\
+&= 1 - \frac{1}{2} \frac{9\rho^2}{(\mathbb{E}[|r_1|])^2} \\
+&\ge 1 - \frac{1}{2} \frac{9L^2 b^2}{\text{beta}\left(\frac{1}{2}, \frac{d-1}{2}\right)^2 ||\nabla g(\vec{x}_t)||_2^2 \:\mathbb{E}[|r_1|]^2} \\
+&\ge 1 - \frac{9L^2 b^2d^2}{8 ||\nabla g(\vec{x}_t)||_2^2} 
+\end{align*}
+
+\textbf{Hence Proved}
+
+% Optional, if you want to make a comment about vulnerability of any result or so on.
+%\begin{danger}
+%This is the danger environment.
+%\end{danger}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
+
