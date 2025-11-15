@@ -1,0 +1,428 @@
+% -----------------------------*- LaTeX -*------------------------------
+%   SCRIBE.STY -- Make scribe notes
+
+% Avishek Ghosh (IIT Bombay); Jul 2025
+
+% Modified version of
+
+%   Avishek Ghosh (IIT Bombay); Dec 2016
+%
+% Modified version of
+%
+%   Aditya Gopalan ( aditya@ece.iisc.ernet.in ); Sept 2014
+
+%   Modified from a version by Constantine Caramanis, Aug 2007
+%
+%   Constantine Caramanis;  August, 2007
+%
+%   Modified from a version by Jeff Erickson (jeffe@cs.uiuc.edu), July 29, 1998
+%
+%   Loosely based on the MIT/Berkeley scribe notes macros, but
+%   written from scratch.
+%
+% ----------------------------------------------------------------------
+%   USAGE:
+%
+%   \documentstyle[12pt]{report}		NOT article!
+%   \usepackage{scribe}
+%   ...
+%   \begin{document}
+%   \course{EECS 227} 				optional
+%   \coursetitle{Optimization}	optional
+%   \semester{Fall 2004}			optional
+%   \lecturer{Jeff Erickson}			optional
+%   \scribe{Joe. A Student}			required
+%   \lecturenumber{17}				required (must be a number)
+%   \lecturedate{October 12}			required (omit year)
+%   \maketitle
+% ----------------------------------------------------------------------
+%   The stuff before \maketitle can be in any order, but it has to go
+%   before \maketitle.
+%
+%   The lecture number appears in all page, section, theorem, figure,
+%   table, and equation numbers.  It must be a single positive
+%   integer; ranges like 3--5 are not (yet) properly supported.
+%
+%   Automatically loads the amsmath package, which is a Good Thing,
+%   especially if you're going to use a lot of math.  See ``The LaTeX
+%   Companion'' for details!
+%
+%   To get a proof, use \begin{proof}...\end{proof}.  You can attach
+%   an optional argument, just as with the standard latex theorem
+%   environment.  You can also define new proof-like environments with
+%   \newproof{foo}{bar}, just like \newtheorem.
+% ----------------------------------------------------------------------
+\RequirePackage{amsmath,amssymb}
+\usepackage{times}
+\usepackage{mathptmx}
+\usepackage{bm}
+%\usepackage[usenames, dvipsnames]{xcolor}
+\let\labelindent\relax
+\usepackage{enumitem}
+\setlist[enumerate, 1]{topsep=-0.5ex, parsep=0.5ex}
+\usepackage{mathtools}
+\mathtoolsset{mathic=true}
+\usepackage{algorithm} 
+\usepackage{algorithmic}  
+\usepackage[linesnumbered,ruled,lined,algo2e]{algorithm2e} 
+\usepackage{booktabs}
+
+
+\def\course#1{\def\@course{#1}}
+\course{DS603}
+
+\def\coursetitle#1{\def\@coursetitle{#1}}
+\coursetitle{Robust Machine Learning}
+
+\def\semester#1{\def\@semester{#1}}
+\semester{Autumn 2025}
+
+\def\lecturer#1{\def\@lecturer{#1}}
+\lecturer{Arjun Bhagoji}
+
+\def\scribe#1{\def\@scribe{#1}}
+% \@scribe intentionally undefined
+
+\def\lecturenumber#1{\def\@lecturenumber{#1}}
+% \@lecturenumber intentionally undefined
+
+\def\lecturedate#1{\def\@lecturedate{#1}}
+% \@lecturedata intentionally undefined
+
+\def\xxx{\vphantom{()}}
+\def\maketitle
+{
+\def\@oddhead{\underline{\hbox to\textwidth{\textbf{%
+	\rlap{\@course\phantom{()}}\hfil
+	Lecture~\@lecturenumber~--- \@lecturedate
+	\hfil\llap{\@semester}}}}}
+\def\@oddfoot{\hfil\@lecturenumber-\thepage\hfil}
+\def\ps@myfirst{\ps@plain\def\@oddfoot{\hfil\@lecturenumber-\thepage\hfil}}
+\thispagestyle{myfirst}
+\noindent
+\framebox[\textwidth]{\vbox to 0.75in{
+\hbox to\textwidth{~\textbf{\rlap{\@course: \@coursetitle\xxx}
+	\hfil\llap{\@semester}}~}
+\vss
+\hbox to \textwidth{\Large\hfill Lecture \@lecturenumber~--- \@lecturedate\hfill}
+\vss
+\hbox to \textwidth{~\textsl{\rlap{Lecturer: \@lecturer\xxx}
+	\hfill\llap{Scribe: \@scribe}}~}
+}}
+\setcounter{chapter}{\@lecturenumber}
+\bigskip
+}
+
+% ----------------------------------------------------------------------
+%  Add a period after the theorem number, and make theorems slanted
+%  instead of italic to help distinguish text from math.
+% ----------------------------------------------------------------------
+\def\@begintheorem#1#2{\trivlist \item[\hskip \labelsep{\bf #1\ #2.}]\sl}
+\def\@opargbegintheorem#1#2#3{\trivlist
+      \item[\hskip \labelsep{\bf #1\ #2\ (#3).}]\sl}
+
+% ----------------------------------------------------------------------
+%  Standard lemma, theorem, and corollary environments.
+% ----------------------------------------------------------------------
+\newtheorem{lemma}{Lemma}[chapter]
+\newtheorem{theorem}[lemma]{Theorem}
+\newtheorem{corollary}[lemma]{Corollary}
+
+% ----------------------------------------------------------------------
+%  \newproof{type}{Text}[post] -- Define a new proof-like environment.
+%  Proofs are just like theorems, except they aren't numbered, and
+%  their text is (by default) set in roman type.  Proofs can take
+%  optional arguments, just like theorems.  The optional ``post''
+%  argument specifies a postscript, like a QED symbol.
+% ----------------------------------------------------------------------
+\def\newproof#1#2{\@ifnextchar[{\@xnproof{#1}{#2}}{\@xnproof{#1}{#2}[]}}
+
+\def\@xnproof#1#2[#3]{\expandafter\@ifdefinable\csname #1\endcsname
+{\global\@namedef{#1}{\@prf{#2}}\global\@namedef{end#1}{\@endprf{#3}}}}
+
+\def\@prf#1{\@ifnextchar[{\@xprf{#1}}{\@yprf{#1}}}
+
+\def\@xprf#1[#2]{\begin{trivlist}\item[\hskip\labelsep{\bf #1\ (#2):}]}
+
+\def\@yprf#1{\begin{trivlist}\item[\hskip\labelsep{\bf #1:}]}
+
+\def\@endprf#1{#1\end{trivlist}}
+
+% ----------------------------------------------------------------------
+%  Standard proof environment.
+% ----------------------------------------------------------------------
+\@ifundefined{square}{\let\square\Box}{}
+\def\QED{{\boldmath$\square$}}
+\def\markatright#1{\leavevmode\unskip\nobreak\quad\hspace*{\fill}{#1}}
+\def\qed{\markatright{\QED}}
+\newproof{proof}{Proof}[\qed]
+
+% ----------------------------------------------------------------------
+%  Make captions smaller than the text, make their titles bold.
+%  Arguments:   #1 == figure name: "Figure 5"
+%               #2 == caption: "Papers by \Erdos, 1900--2000 (projected)"
+%  Put less space after floats, since captions are smaller
+% ----------------------------------------------------------------------
+\long\def\@makecaption#1#2{
+   \vskip 10pt
+   \setbox\@tempboxa\hbox{{\small \textbf{#1.} #2}}
+   \ifdim \wd\@tempboxa >\hsize         % IF longer than one line:
+       {\footnotesize \textbf{#1.} #2\par}% THEN set as ordinary paragraph.
+     \else                              %   ELSE  center.
+       \hbox to\hsize{\hfil\box\@tempboxa\hfil}
+   \fi}
+\dbltextfloatsep 18pt plus 2pt minus 4pt   % was 20pt plus 2pt minus 4pt
+\textfloatsep 18pt plus 2pt minus 4pt      % was 20pt plus 2pt minus 4pt
+
+% ----------------------------------------------------------------------
+%  Dangerous bend environments, stolen from TeXbook and slightly
+%  massaged.
+%
+%  Invoke as \begin{[d]danger}...\end{[d]danger}.  The enclosed text
+%  is offset just like any other list (theorem, proof, etc.)  Puts
+%  sign[s] in front of first two lines of first paragraph, which are
+%  (supposedly) never split by a page boundary.  Does NOT shrink or
+%  otherwise modify the text.
+% ----------------------------------------------------------------------
+%  The dangerous bend signs are the correct size to match two lines of
+%  Computer Modern 9pt type.   We really ought to scale them up to
+%  fit whatever size we're using, but we don't.  Unfortunately, manfnt
+%  is actually a 10pt font, so if we want to match 11pt Computer
+%  Modern, we have to scale manfnt to 12.222222pt!  Thanks, Don.
+% ----------------------------------------------------------------------
+\font\manual=manfnt
+\def\dbend{{\manual\char127}} % dangerous bend sign
+
+% Danger, Will Robinson!
+\def\danger{\begin{trivlist}\item[]\noindent%
+\begingroup\hangindent=3pc\hangafter=-2%\clubpenalty=10000%
+\def\par{\endgraf\endgroup}%
+\hbox to0pt{\hskip-\hangindent\dbend\hfill}\ignorespaces}
+\def\enddanger{\par\end{trivlist}}
+
+% Danger! Danger!
+\def\ddanger{\begin{trivlist}\item[]\noindent%
+\begingroup\hangindent=3pc\hangafter=-2%\clubpenalty=10000%
+\def\par{\endgraf\endgroup}%
+\hbox to0pt{\hskip-\hangindent\dbend\kern2pt\dbend\hfill}\ignorespaces}
+\def\endddanger{\par\end{trivlist}}
+
+
+
+% Formatting
+\oddsidemargin .00in
+\evensidemargin .00in
+\marginparwidth 0.07 true in
+\addtolength{\headsep}{0.25in}
+\textheight 8.5 true in
+\textwidth 6.5 true in
+\clubpenalty=10000
+
+
+%--------------------------------------------
+%%% New macros %%%%
+\DeclareMathOperator{\cl}{cl}
+\DeclareMathOperator{\bndry}{bd}
+\DeclareMathOperator{\intr}{int}
+\DeclareMathOperator{\erfc}{erfc}
+\DeclareMathOperator{\erf}{erf}
+\DeclareMathOperator{\sat}{sat}
+\DeclareMathOperator{\vol}{vol}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\linspan}{span}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\Ad}{Ad}
+\DeclareMathOperator{\AbsCont}{AC}
+\DeclareMathOperator{\PCont}{PC}
+\DeclareMathOperator{\Cont}{C}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator*{\minimize}{min}
+\DeclareMathOperator*{\maximize}{maximize}
+\DeclareMathOperator{\sbjto}{subject\,\,to}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\domain}{dom}
+\DeclareMathOperator{\image}{image}
+\DeclareMathOperator{\Lift}{Lift}
+\DeclareMathOperator{\Leb}{Leb}
+\DeclareMathOperator*{\indep}{\protect\mathpalette{\protect\independenT}{\perp}}
+\DeclareMathOperator{\eval}{ev}
+\DeclareMathOperator{\id}{id}
+\DeclareMathOperator{\graph}{graph}
+\DeclareMathOperator{\Jac}{Jac}
+\DeclareMathOperator{\grad}{grad}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\epi}{epi}
+\DeclareMathOperator{\ch}{ch}
+\DeclareMathOperator{\Objects}{Ob}
+\DeclareMathOperator{\Morphisms}{Mor}
+\DeclareMathOperator*{\esssup}{ess\,sup}
+\DeclareMathOperator{\NE}{NE}
+\DeclareMathOperator{\GL}{GL}
+\DeclareMathOperator{\gl}{\mathfrak{gl}}
+\DeclareMathOperator{\SL}{SL}
+\DeclareMathOperator{\essell}{\mathfrak{sl}}
+\DeclareMathOperator{\Stiefel}{St}
+\DeclareMathOperator{\Symplectic}{Sp}
+\DeclareMathOperator{\Ortho}{O}
+\DeclareMathOperator{\ortho}{\mathfrak{o}}
+\DeclareMathOperator{\SpecialOrtho}{SO}
+\DeclareMathOperator{\specialortho}{\mathfrak{so}}
+\DeclareMathOperator{\Grassmann}{Gr}
+
+\newcommand{\ra}{\ensuremath{\rightarrow}}
+\newcommand{\Ra}{\ensuremath{\;\Longrightarrow\;}}
+\newcommand{\lra}{\ensuremath{\longrightarrow}}
+\newcommand{\eps}{\ensuremath{\varepsilon}}
+\newcommand{\fa}{\ensuremath{\forall\,}}
+\renewcommand{\le}{\ensuremath{\leqslant}}
+\renewcommand{\ge}{\ensuremath{\geqslant}}
+\renewcommand{\leq}{\le}
+\renewcommand{\geq}{\ge}
+\newcommand{\eqvcond}{\ensuremath{\Longleftrightarrow}}
+\newcommand{\therex}{\ensuremath{\exists\,}}
+\newcommand{\setmin}{\ensuremath{\setminus}}%smallsetminus
+\newcommand{\Tangent}{\ensuremath{T}}
+\newcommand{\Jacobian}{\ensuremath{\nabla}}
+\newcommand{\Hessian}{\ensuremath{\nabla^2}}
+\newcommand{\PContDiff}{\PCont^{1}}
+\newcommand{\dual}{^\star}
+
+
+\let\oldemptyset\emptyset
+\let\emptyset\varnothing
+
+\newcommand{\indic}[1]{\ensuremath{\mathds{1}_{#1}}}
+\newcommand{\abs}[1]{\ensuremath{\left\lvert{#1}\right\rvert}}
+\newcommand{\restr}[1]{\ensuremath{|_{\!#1}}}
+%\newcommand{\pullback}[2]{\ensuremath{{#1}^\star{#2}}}
+%\newcommand{\pushforward}[2]{\ensuremath{{#1}_\star {#2}}}
+\newcommand{\inclusion}[1]{\ensuremath{\imath_{#1}}}
+\newcommand{\inj}{\imath}
+
+\newcommand{\bs}[1]{\ensuremath{\boldsymbol{#1}}}
+\newcommand{\Ellp}[1]{\ensuremath{\pmb{L}_{#1}}}
+\newcommand{\inprod}[2]{\ensuremath{\left\langle{#1},\,{#2}\right\rangle}}
+
+
+\newcommand{\interject}[1]{\textcolor{red}{[#1]}}
+\newcommand{\embf}[1]{\textit{\textbf{#1}}}
+\newcommand{\secref}[1]{\S\ref{#1}}
+\newcommand{\pdmat}[1]{\mathcal{S}^{++}_{#1}}
+\newcommand{\psdmat}[1]{\mathcal{S}^{+}_{#1}}
+\newcommand{\Ck}[1]{\mathcal{C}^{#1}}
+\newcommand{\size}[1]{\left\lvert{#1}\right\rvert}
+\newcommand{\cat}[1]{\mathfrak{#1}}
+\newcommand{\JOrtho}[1]{\Ortho_J}
+\newcommand{\incl}[1]{\imath_{#1}^{\vphantom{#1}}}
+\newcommand{\floor}[1]{\left\lfloor{#1}\right\rfloor}
+\newcommand{\ceil}[1]{\left\lceil{#1}\right\rceil}
+\newcommand{\restrto}[1]{|_{#1}}
+
+
+
+
+\newcommand{\Ball}{\mathsf{B}}
+\newcommand{\transpose}{^\transp}
+\newcommand{\herm}{\ensuremath{^\star}}
+\newcommand{\fixed}{\ensuremath{^\circ}}
+\newcommand{\opt}[1]{{#1}^{\ast}}
+\newcommand{\horizon}{N}
+\newcommand{\cost}{\ensuremath{L}}
+\newcommand{\fcost}{\ensuremath{V_F}}
+\newcommand{\policies}{\Pi}
+\newcommand{\valuefunc}{\ensuremath{V_{\horizon}^{*}}}
+\newcommand{\Ucal}{\ensuremath{\mathcal{U}}}
+\newcommand{\Rcal}{\ensuremath{\mathcal{R}}}
+\newcommand{\Sbb}{\ensuremath{\mathbb{S}}}
+\newcommand{\Wbb}{\ensuremath{\mathbb{W}}}
+\newcommand{\compose}[2]{\ensuremath{{#1} \circ {#2}}}
+\newcommand{\as}{\ensuremath{^\ast}}
+\newcommand{\topdual}{^\star}
+\newcommand{\inverse}{\ensuremath{^{-1}}}
+\newcommand{\psinv}{\ensuremath{^{+}}}
+\newcommand{\ol}{\overline}
+\newcommand{\ul}{\underline}
+\newcommand{\wt}{\widetilde}
+\newcommand{\wh}{\widehat}
+\newcommand{\Let}{\coloneqq}%{:\!=}
+\newcommand{\teL}{\eqqcolon}%{=\!:}
+\newcommand{\nn}{\nonumber}
+%------------------------------------------------------------------
+% SETS
+%------------------------------------------------------------------
+\newcommand{\Rbb}{\ensuremath{\mathbb{R}}}
+\newcommand{\unitcircle}{\ensuremath{\mathbb S^1}}
+\newcommand{\Compl}{\ensuremath{\mathbb{C}}}
+\newcommand{\Nbb}{\ensuremath{\mathbb{N}}}
+\newcommand{\Zbb}{\ensuremath{\mathbb{Z}}}
+\newcommand{\N}{\ensuremath{\Nbb^*}}
+\newcommand{\Q}{\ensuremath{\mathbb{Q}}}
+\newcommand{\UnitDisc}{\ensuremath{\mathbb{D}}}
+% ------------------------------------------------------------------
+% MATRICES AND NORMS
+% ------------------------------------------------------------------
+\newcommand{\smat}[1]{\ensuremath{\left[\begin{matrix} #1 \end{matrix}\right]}}
+\newcommand{\mat}[1]{\ensuremath{\left(\begin{matrix} #1 \end{matrix}\right)}}
+\newcommand{\idmat}[1]{\ensuremath{\mathrm I_{#1}}}
+\newcommand{\norm}[1]{\ensuremath{\left\lVert #1 \right\rVert}}
+\newcommand{\epower}[1]{\ensuremath{\mathrm{e}^{#1}}}
+\newcommand{\pmat}[1]{\begin{pmatrix}#1\end{pmatrix}}
+\newcommand{\manifold}{\mathsf{M}}
+\newcommand{\vecfld}{f}
+
+\makeatletter\newenvironment{graybox}{%
+\begin{lrbox}{\@tempboxa}\begin{minipage}[c]{0.98\columnwidth}}{\end{minipage}\end{lrbox}%
+\colorbox{AntiqueWhite}{\usebox{\@tempboxa}}
+}\makeatother
+
+\makeatletter
+\renewcommand*\env@matrix[1][*\c@MaxMatrixCols c]{%
+  \hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{#1}}
+\makeatother
+
+\DeclarePairedDelimiterX\aset[1]\lbrace\rbrace{\def\suchthat{\; \delimsize\vert\;}#1}
+\DeclarePairedDelimiterX\LieBracket[2]\lbrack\rbrack{#1,#2}
+\DeclarePairedDelimiterX\lcrc[2]\lbrack\rbrack{#1,#2}
+\DeclarePairedDelimiterX\lcro[2]\lbrack\lbrack{#1,#2}
+\DeclarePairedDelimiterX\lorc[2]\rbrack\rbrack{#1,#2}
+\DeclarePairedDelimiterX\loro[2]\rbrack\lbrack{#1,#2}
+\DeclarePairedDelimiterX\lm[2]\lparen\rparen{#1;#2}
+\DeclarePairedDelimiterX\expecof[1]\lbrack\rbrack{#1}
+
+\renewcommand{\theequation}{(\arabic{equation})}
+\makeatletter
+\def\tagform@#1{\maketag@@@{\ignorespaces#1\unskip\@@italiccorr}}
+\makeatother
+
+%%% Special bit of code for the square root symbol:
+% it renames \sqrt as \oldsqrt
+\let\oldsqrt\sqrt
+% it defines the new \sqrt in terms of the old one
+\def\sqrt{\mathpalette\DHLhksqrt}
+\def\DHLhksqrt#1#2{%
+\setbox0=\hbox{$#1\oldsqrt{#2\,}$}\dimen0=\ht0
+\advance\dimen0-0.2\ht0
+\setbox2=\hbox{\vrule height\ht0 depth -\dimen0}%
+{\box0\lower0.4pt\box2}}
+
+
+\newcommand{\Dd}{\ensuremath{\mathcal{D}}}
+\newcommand{\Oo}{\ensuremath{\mathcal{O}}}
+\newcommand{\lpL}[1][]{\ensuremath{\mathbb{L}_{#1}}}
+\newcommand{\om}{\ensuremath{\omega}}
+\newcommand{\Lm}{\ensuremath{\Lambda}}
+
+
+\newcommand{\sysDim}{\ensuremath{d}}
+\newcommand{\contDim}{\ensuremath{r}}
+
+\newcommand{\dcv}{\ensuremath{x}} % decision variable 
+\newcommand{\param}{\ensuremath{\alpha}} % some parameter 
+\newcommand{\dcvset}{\ensuremath{C}} % constraint set
+\newcommand{\paramset}{\ensuremath{P}} % the set where the parameter lives
+
+
+% --------------------------------------------

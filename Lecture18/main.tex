@@ -1,0 +1,821 @@
+% -----------------------------*- LaTeX -*------------------------------
+\documentclass[11pt]{report}
+\usepackage{scribe_ds603}
+\usepackage{float}
+\usepackage[backend=biber,style=ieee]{biblatex}
+\addbibresource{refs.bib}
+
+\begin{document}
+
+\scribe{Anasmit Mitra}
+\lecturenumber{17}
+\lecturedate{29/11/25}
+
+\maketitle
+% ----------------------------------------------------------------------
+\section{Empirical Adversarial Training}
+
+Empirical adversarial training formulates robust learning as a saddle-point optimization problem. 
+For a hypothesis \(h \in \mathcal{H}\), loss function \(\ell\), and an adversarial perturbation set 
+\(\mathcal{N}(x) = \{x' : \|x' - x\| \le \epsilon\}\), the objective is
+\begin{align}
+    h_{\mathrm{robust}}
+    \;=\;
+    \argmin_{h\in\mathcal{H}}
+    \; \E_{(x,y)\sim P}
+    \Big[
+        \max_{x' \in \mathcal{N}(x)}
+        L_{\mathrm{proxy}}(x', y; h)
+    \Big].
+    \label{eq:emp-adv-training}
+\end{align}
+The inner maximization adversarially perturbs the input to maximize loss, and the outer minimization updates parameters to reduce this worst-case loss. This corresponds to a first-order approximation of robust optimization.
+
+\subsection{Projected Gradient Descent (PGD) approximation}
+
+The inner maximization in \eqref{eq:emp-adv-training} is commonly approximated by
+iterative first-order ascent (Projected Gradient Descent, PGD). Below we
+display the standard updates for the two most common perturbation norms.
+
+\paragraph{\(\ell_\infty\) (elementwise) perturbations.}
+For an \(\ell_\infty\) perturbation set \(\mathcal{N}_\infty(x)=\{x' : \|x'-x\|_\infty \le \varepsilon\}\),
+a standard iterative update (iterative-FGSM / PGD-\(\ell_\infty\)) is
+\[
+x^{(k+1)} \;=\; \Pi_{\mathcal{N}_\infty(x)}\!\left(
+    x^{(k)} + \alpha_{\mathrm{in}} \,\operatorname{sign}\!\big(\nabla_x \ell(h_\theta(x^{(k)}),y)\big)
+\right),
+\]
+where \(\operatorname{sign}(\cdot)\) is applied elementwise, \(\alpha_{\mathrm{in}}>0\) is the inner step size,
+and \(\Pi_{\mathcal{N}_\infty(x)}\) denotes projection onto the \(\ell_\infty\) ball (componentwise clipping).
+
+\paragraph{\(\ell_2\) perturbations.}
+For an \(\ell_2\) perturbation set \(\mathcal{N}_2(x)=\{x' : \|x'-x\|_2 \le \varepsilon\}\),
+one typically uses a normalized-gradient ascent step:
+\[
+x^{(k+1)} \;=\; \Pi_{\mathcal{N}_2(x)}\!\left(
+    x^{(k)} + \alpha_{\mathrm{in}} \frac{\nabla_x \ell(h_\theta(x^{(k)}),y)}{\|\nabla_x \ell(h_\theta(x^{(k)}),y)\|_2}
+\right),
+\]
+where the projection \(\Pi_{\mathcal{N}_2(x)}\) rescales the perturbation to satisfy the \(\ell_2\) constraint when required.
+
+\paragraph{Initialization and practical considerations.}
+A common initialization is \(x^{(0)} = x + \xi\) where \(\xi\) is sampled uniformly from the perturbation set
+(e.g., \(\xi \sim \mathrm{Uniform}([-\varepsilon,\varepsilon]^d)\) for \(\ell_\infty\)), and multiple random restarts
+may be used to improve the chance of finding high-loss perturbations. Typical heuristics for \(\alpha_{\mathrm{in}}\)
+include \(\alpha_{\mathrm{in}} = \varepsilon / K\) or tuning \(\alpha_{\mathrm{in}}\) together with the number of
+steps \(K\). Using too large a step size can overshoot steep regions, while too small a step size may require many iterations.
+
+\paragraph{Remarks.}
+\begin{itemize}
+  \item The `sign` update is specific to the \(\ell_\infty\) geometry; it does not correctly approximate \(\ell_2\) ascent.
+  \item The projection operator \(\Pi_{\mathcal N(x)}\) should be implemented to match the chosen norm:
+        for \(\ell_\infty\) it is componentwise clipping to \([x-\varepsilon,x+\varepsilon]\);
+        for \(\ell_2\) it is projection onto the Euclidean ball centered at \(x\).
+  \item In practice the inner maximization is not solved exactly; PGD provides a first-order approximation whose
+        quality depends on \(K\), \(\alpha_{\mathrm{in}}\), initialization, and the nonconvexity of the loss surface.
+\end{itemize}
+
+
+\subsection{Parameter update}
+
+Given the adversarial sample \(x_{\mathrm{adv}}\), parameters \(\theta\) are updated via stochastic gradient descent:
+\begin{align}
+    \theta_{t}
+    \;=\;
+    \theta_{t-1}
+    -
+    \alpha \,
+    \nabla_{\theta}
+    L_{\mathrm{proxy}}\big(h_{\theta_{t-1}}(x_{\mathrm{adv}}), y\big),
+\end{align}
+with learning rate \(\alpha > 0\). This procedure alternates between adversarial sample generation and gradient-based parameter updates.
+
+\subsection{Properties}
+
+\paragraph{Advantages.}
+\begin{itemize}
+    \item Conceptually simple and compatible with standard stochastic optimization.
+    \item Demonstrates strong empirical robustness against the specific attack class used for inner maximization.
+    \item Effective when the inner maximization is solved to sufficient accuracy.
+\end{itemize}
+
+\paragraph{Limitations.}
+\begin{itemize}
+    \item Computationally expensive due to the iterative inner maximization.
+    \item Robustness may not generalize across different attack models or perturbation sets.
+    \item Does not provide certified guarantees of robustness.
+\end{itemize}
+
+\subsection{Implementation considerations}
+Standard implementations frequently incorporate non-zero random initialization for the PGD process and choose 
+\(\eta_{\mathrm{in}}\) comparable to the perturbation scale \(\epsilon\).  
+These design choices help avoid local maxima in the inner optimization and improve coverage of the perturbation set.
+
+% ----------------------------------------------------------------------
+\section{Gradient Masking in Adversarially Trained Models}
+
+Gradient masking refers to a failure mode in which gradients of the loss with respect to the input
+become uninformative for generating adversarial perturbations, despite the classifier not being 
+truly robust. This phenomenon is often associated with highly non-linear or irregular loss surfaces 
+that obstruct effective first-order adversarial optimization.
+
+\subsection{Loss landscape geometry}
+
+Let \(L(x)\) denote the loss of a trained classifier evaluated at input \(x\). 
+For an infinitesimal perturbation \(\delta\), a local approximation of the loss is
+\begin{align}
+    L(x + \delta)
+    \;\approx\;
+    L(x) 
+    + \nabla_x L(x)^\top \delta 
+    + \tfrac{1}{2}\delta^\top \nabla_x^2 L(x)\,\delta.
+    \label{eq:taylor}
+\end{align}
+Well-behaved gradients correspond to a loss surface in which the first-order term 
+\(\nabla_x L(x)\) reliably identifies directions that increase the loss. 
+However, adversarially trained models frequently exhibit loss surfaces with the following characteristics:
+\begin{itemize}
+    \item regions of extreme curvature, where higher-order terms dominate; and
+    \item flat regions in which \(\|\nabla_x L(x)\|\) is very small despite nearby points having significantly larger loss.
+\end{itemize}
+In such settings, first-order attacks that rely solely on the gradient may fail to find valid adversarial examples even though they exist, giving the appearance of robustness.
+
+\subsection{Two-dimensional slice visualization}
+
+A common diagnostic is to examine a two-dimensional slice of the loss surface around an input \(x\), 
+parametrized by orthonormal directions \(v_1, v_2\in\Rbb^d\). Define
+\[
+    f(\epsilon_1,\epsilon_2)
+    =
+    L\bigl(x + \epsilon_1 v_1 + \epsilon_2 v_2\bigr),
+\]
+for \((\epsilon_1,\epsilon_2)\) in a small neighborhood of the origin.  
+For robust behavior, \(f\) should increase smoothly in the adversarial direction.  
+In contrast, gradient masking manifests as irregular, sharply varying surfaces 
+in adversarial directions and comparatively flat regions in benign directions.
+
+Figure~\ref{fig:gradient_masking} illustrates such surfaces obtained from adversarially trained networks.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Images/gradient_masking.png}
+    \caption{
+        Two-dimensional slices of the loss landscape for an adversarially trained classifier.
+        The axes \(\epsilon_1,\epsilon_2\) correspond to orthonormal directions in input space.  
+        The surface exhibits highly curved regions near adversarial examples and comparatively
+        flat regions near non-adversarial examples.  
+        Such geometry can cause first-order adversarial attacks to fail, despite the absence of true robustness.
+    }
+    \label{fig:gradient_masking}
+\end{figure}
+
+\subsection{Implications}
+
+Gradient masking does not constitute robustness.  
+Although it impedes gradient-based attacks, stronger attacks—such as randomized restarts, black-box optimization, or second-order methods—can typically circumvent it.  
+Thus, robust evaluation requires verifying that gradients remain informative and that the model's adversarial accuracy persists under adaptive attacks.
+
+\section{TRADES: A Principled Accuracy--Robustness Trade-off}
+
+Adversarial examples typically arise near the classifier's decision boundary,
+where small perturbations can change the predicted label.
+The TRADES framework of Zhang et al.\ \cite{zhang2019trades} gives a
+theoretical decomposition of adversarial risk that separates
+\emph{natural (benign) classification error} from
+\emph{boundary error}---instability of predictions in an adversarial
+neighborhood.  This viewpoint leads to a surrogate training objective that
+explicitly balances accuracy and robustness.
+
+\subsection{Benign vs.\ adversarial risk}
+
+Given an adversarial perturbation set $\mathcal{N}(x)$,
+the adversarial risk of a classifier $h$ is
+\[
+L_{\mathcal{N}}(h)
+=
+\E_{(x,y)\sim P}
+\!\!\left[
+    \max_{x'\in \mathcal{N}(x)} \ell(h(x'),y)
+\right].
+\]
+TRADES shows that this risk can be decomposed into two components:
+
+\begin{itemize}
+    \item the benign risk $L(h)$, and
+    \item a boundary-error term that measures how unstable the classifier is
+          within the adversarial neighborhood around $x$.
+\end{itemize}
+
+This decomposition implies that reducing adversarial risk requires not only
+good standard accuracy but also controlling how rapidly the classifier's
+predictions change around inputs near the decision boundary.
+
+\subsection{The TRADES objective}
+
+Using the above decomposition, Zhang et al.\ derive a surrogate objective
+that jointly optimizes benign accuracy and local prediction stability.  
+For a robustness weight $\beta > 0$, the TRADES loss is
+\begin{align}
+\mathcal{L}_{\mathrm{TRADES}}
+=
+\ell_{\mathrm{CE}}\big(h(x),y\big)
++
+\beta \cdot
+D_{\mathrm{KL}}\!\big(h(x)\,\|\,h(x')\big),
+\label{eq:trades-loss-corrected}
+\end{align}
+where the inner point $x'$ is chosen via
+\[
+x' \in
+\argmax_{z \in \mathcal{N}(x)}
+    D_{\mathrm{KL}}\!\big(h(x)\,\|\,h(z)\big).
+\]
+
+\paragraph{Interpretation.}
+\begin{itemize}
+    \item The first term promotes standard (natural) accuracy.
+    \item The second term encourages prediction \emph{smoothness}:
+          large KL divergence indicates that $h$ changes sharply within the
+          adversarial neighborhood of $x$.
+    \item The weight $\beta$ handles the accuracy--robustness trade-off:
+          larger $\beta$ emphasizes robustness.
+\end{itemize}
+
+\subsection{Inner maximization via PGD}
+
+The maximizer $x'$ of the KL divergence is approximated by PGD:
+starting from $x^{(0)} = x + \xi$, for $k=0,\dots,K-1$,
+\[
+x^{(k+1)}
+=
+\Pi_{\mathcal{N}(x)}\!\left(
+    x^{(k)}
+    +
+    \eta_{\mathrm{in}}
+    \operatorname{sign}
+    \big(
+        \nabla_x D_{\mathrm{KL}}(h(x), h(x^{(k)}))
+    \big)
+\right).
+\]
+(This is the standard update for $\ell_\infty$ perturbations; for other norms,
+the gradient step is normalized accordingly.)
+
+\subsection{Parameter update}
+
+Given adversarial examples $x_{\mathrm{adv}}$, parameters are updated via
+\[
+\theta
+\leftarrow
+\theta
+-
+\eta
+\left(
+    \nabla_\theta \ell_{\mathrm{CE}}(h(x),y)
+    +
+    \beta
+    \nabla_\theta D_{\mathrm{KL}}
+    \!\big(h(x), h(x_{\mathrm{adv}})\big)
+\right).
+\]
+
+
+\subsection{Empirical performance}
+
+Table~\ref{tab:trades-results} summarizes representative adversarial robustness results from 
+the TRADES paper under PGD attacks on CIFAR-10.  
+These results illustrate that TRADES achieves substantially higher robust accuracy compared to 
+previous defense strategies based on gradient masking or regularization.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l|c|c|c|c|c}
+\hline
+\textbf{Defense} & \textbf{Type} & \textbf{Attack} & \textbf{Dataset} & \(A_{\mathrm{nat}}\) & \(A_{\mathrm{rob}}\) \\
+\hline
+BRRG18 & gradient mask & ACW18 & CIFAR10 & -- & 0\% \\
+MLW18 & gradient mask & ACW18 & CIFAR10 & -- & 0\% \\
+DAL18 & gradient mask & ACW18 & CIFAR10 & -- & 0\% \\
+SKN18 & gradient mask & ACW18 & CIFAR10 & -- & 9\% \\
+NKM17 & gradient mask & ACW18 & CIFAR10 & -- & 15\% \\
+WSMK18 & robust opt. & FGSM\(^\infty\)(PGD) & CIFAR10 & 27.0\% & 23.5\% \\
+MMS18 & robust opt. & FGSM\(^\infty\)(PGD) & CIFAR10 & 87.0\% & 46.0\% \\
+ZSLG16 & regularization & FGSM\(^\infty\)(PGD) & CIFAR10 & 94.64\% & 0.19\% \\
+KGB17 & regularization & FGSM\(^\infty\)(PGD) & CIFAR10 & 95.25\% & 45.89\% \\
+RDV17 & regularization & FGSM\(^\infty\)(PGD) & CIFAR10 & 88.46\% & 49.09\% \\
+TRADES (\(1/\lambda=1\)) & regularization & FGSM\(^\infty\)(PGD) & CIFAR10 & 89.48\% & 56.43\% \\
+TRADES (\(1/\lambda=2\)) & regularization & FGSM\(^\infty\)(PGD) & CIFAR10 & 88.64\% & 55.20\% \\
+TRADES (\(1/\lambda=6\)) & regularization & FGSM\(^\infty\)(PGD) & CIFAR10 & 84.92\% & 56.61\% \\
+\hline
+\end{tabular}
+\caption{Performance comparison of TRADES and prior defenses under white-box PGD attacks on CIFAR-10.}
+\label{tab:trades-results}
+\end{table}
+
+% ----------------------------------------------------------------------
+
+\section{Certified Robustness}
+
+Certified robustness methods aim to provide formal guarantees that a classifier's prediction remains
+unchanged for all perturbations within a specified adversarial region.  
+Unlike empirical adversarial training, which approximates worst-case perturbations using gradient-based
+attacks, certified methods compute provable upper and lower bounds on the network's output under all
+perturbations belonging to the set \(\mathcal{N}(x)\).
+
+\subsection{Certified prediction stability}
+
+A classifier \(h\) is said to be certifiably robust at input \(x\) with radius \(\epsilon\) if
+\[
+h(x') = h(x)
+\quad\text{for all } x' \in \mathcal{N}(x)
+= \{x' : \|x'-x\|\le\epsilon\}.
+\]
+To establish this property, certified defenses propagate interval or polytope bounds through each
+layer of the network to obtain tight output bounds.  
+If the lower bound on the predicted logit for the true class exceeds the upper bounds of all other
+classes, the classification is guaranteed to remain invariant to all admissible perturbations.
+
+\subsection{Bounding methods}
+
+Several classes of techniques have been developed to compute certified output bounds:
+
+\begin{itemize}
+    \item \textbf{Lipschitz-based certificates:}  
+    These methods enforce or estimate global or local Lipschitz constants of the classifier.  
+    If \(h\) is \(L\)-Lipschitz, then 
+    \(\|h(x)-h(x')\| \le L\|x-x'\|\), 
+    enabling robustness certificates by bounding the separation between class logits.
+
+    \item \textbf{Convex outer polytope approximations:}  
+    These approaches construct convex relaxations of the adversarial polytope  
+    \(\{h(x') : x' \in \mathcal{N}(x)\}\).  
+    By solving linear or semidefinite programs over these relaxations, one obtains guaranteed
+    bounds on the logits of perturbed inputs.
+
+    \item \textbf{Interval Bound Propagation (IBP):}  
+    IBP propagates lower and upper bounds of activations through the network via interval arithmetic.
+    For a layer \(z^{(\ell+1)} = \phi(W z^{(\ell)} + b)\), one computes
+    explicit bounds \([z^{(\ell+1)}_{\min}, z^{(\ell+1)}_{\max}]\) using  
+    the known monotonicity of \(\phi\) and the affine structure of \(Wz+b\).  
+    The resulting bounds provide conservative but efficient certificates.
+\end{itemize}
+
+Let \([f_{\min}(x'), f_{\max}(x')]\) denote certified lower and upper bounds on the logits at any 
+\(x' \in \mathcal{N}(x)\). A prediction for class \(y\) is certified if
+\[
+f_{\min}(x')_y > \max_{j\neq y} f_{\max}(x')_j.
+\]
+
+\subsection{Properties}
+
+Certified robustness techniques possess several desirable characteristics:
+
+\begin{itemize}
+    \item \textbf{Provable safety:}  
+    No adversarial examples exist within the certified perturbation set.
+
+    \item \textbf{Resistance to adaptive attacks:}  
+    Since certificates do not rely on gradient approximations, they are not vulnerable to gradient masking.
+
+    \item \textbf{No gradient masking:}  
+    Certified methods evaluate worst-case perturbations analytically, not by optimization.
+\end{itemize}
+
+\subsection{Limitations}
+
+Despite their rigorous guarantees, certified defenses face practical limitations:
+
+\begin{itemize}
+    \item \textbf{High computational cost:}  
+    Computing bounds during training substantially increases the per-iteration complexity.
+
+    \item \textbf{Small certifiable radii:}  
+    Current methods typically certify only small perturbation norms, especially for high-dimensional datasets.
+\end{itemize}
+
+Overall, certified robustness provides mathematically rigorous guarantees of adversarial stability,
+while incurring increased computational demands and offering limited certified radii in practice.
+
+
+% ----------------------------------------------------------------------
+\section{Visualizing Adversarially Trained Models}
+
+A useful tool for understanding the internal representations learned by adversarially trained
+models is layer-wise similarity analysis.  
+Centered Kernel Alignment (CKA) provides a measure of similarity between feature representations 
+across layers or across different networks.  
+Given two feature matrices \(Z_1, Z_2 \in \Rbb^{n \times d}\), the CKA similarity is defined as
+\[
+\mathrm{CKA}(Z_1, Z_2)
+=
+\frac{\mathrm{HSIC}(Z_1, Z_2)}
+{\sqrt{\mathrm{HSIC}(Z_1, Z_1)\,\mathrm{HSIC}(Z_2, Z_2)}},
+\]
+where \(\mathrm{HSIC}\) denotes the Hilbert--Schmidt Independence Criterion.
+
+\subsection{Representation similarity under adversarial training}
+
+Layer-wise CKA heatmaps reveal structural differences between standard and adversarially 
+trained networks.  
+Several empirical patterns consistently emerge:
+
+\begin{itemize}
+    \item \textbf{Higher self-similarity in deeper layers of robust models:}  
+    Robust networks exhibit more uniform representations across late layers, indicating 
+    increased invariance and compressed feature geometry.
+
+    \item \textbf{Reduced cross-model similarity:}  
+    Representations of adversarially trained models differ substantially from those of standard models,
+    demonstrating that adversarial training alters the feature hierarchy rather than merely modifying
+    the classifier boundary.
+
+    \item \textbf{Dataset dependence:}  
+    The degree of representational shift varies across datasets (e.g., CIFAR-10, ImageNet variants),
+    but the trend of deeper-layer reorganization remains consistent.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.92\textwidth]{Images/cka_visualization.png}
+    \caption{
+        Layer-wise CKA similarity visualizations for standard and adversarially trained models.
+        Top: self-similarity of non-robust and robust ResNet-50 networks on CIFAR-10.
+        Bottom: cross-model similarity comparisons across datasets, illustrating the representational
+        differences induced by adversarial training.
+    }
+    \label{fig:cka-visualization}
+\end{figure}
+
+These observations indicate that adversarial robustness fundamentally modifies the organization
+of intermediate features, producing more stable and structured internal representations compared to
+standard training.
+
+
+% ----------------------------------------------------------------------
+
+
+\section{Optimal Adversarial Risk and Distribution-Induced Limitations}
+
+Adversarial learning differs from the benign setting because the learner must correctly classify
+not only each training point, but all points within an adversarial neighborhood surrounding it.
+Consequently, even the optimal classifier may incur nonzero adversarial risk due to unavoidable
+overlaps in these neighborhoods.  
+This section formalizes these concepts and establishes distribution-dependent limits on robust
+classification.
+
+\subsection{Adversarial risk}
+
+Let $\mathcal{N}(x)$ be the adversarial neighborhood of $x$, typically
+\[
+\mathcal{N}(x) = \{x' : \|x' - x\| \le \varepsilon\}.
+\]
+For a classifier $h$, the adversarial risk is
+\[
+L_{\mathcal{N}}(h)
+=
+\E_{(x,y)\sim P}\Big[ \sup_{x'\in\mathcal{N}(x)} \ell(h(x'), y) \Big].
+\]
+
+\paragraph{Optimal robust classifier.}
+\[
+h_{\mathcal{N}}^*
+\in
+\arg\min_{h\in\mathcal{H}}
+L_{\mathcal{N}}(h).
+\]
+
+\paragraph{Adversarial empirical risk minimizer.}
+Given samples $\{(x_i,y_i)\}_{i=1}^N$,
+\[
+\widehat{h}_{\mathcal{N},N}
+\in
+\arg\min_{h\in \mathcal{H}}
+\frac{1}{N}
+\sum_{i=1}^N 
+\sup_{x'\in \mathcal{N}(x_i)}
+\ell(h(x'),y_i).
+\]
+
+\paragraph{Three key quantities.}
+The adversarial setting mirrors classical learning theory, giving rise to:
+\begin{enumerate}
+    \item \textit{Adversarial optimization error}  
+    \[
+    L_{\mathcal{N}}(\widehat{h}_{\mathcal{N},N}) - \inf_{h\in\mathcal{H}} L_{\mathcal{N}}(h).
+    \]
+
+    \item \textit{Adversarial generalization gap}
+    \[
+    L_{\mathcal{N}}(\widehat{h}_{\mathcal{N},N}) -
+    \frac{1}{N}\sum_{i=1}^N 
+    \sup_{x'\in\mathcal{N}(x_i)}
+    \ell(\widehat{h}_{\mathcal{N},N}(x'),y_i).
+    \]
+
+    \item \textit{Optimal adversarial risk}
+    \[
+    L_{\mathcal{N}}(h_{\mathcal{N}}^*).
+    \]
+\end{enumerate}
+
+The third quantity is intrinsic to the data distribution and cannot be improved by algorithmic means.
+
+\subsection{Unavoidable adversarial error}
+
+Since $\mathcal{N}(x)$ always contains $x$, benign risk is a lower bound:
+\[
+L_{\mathcal{N}}(h_{\mathcal{N}}^*) \ge L(h^*).
+\]
+This inequality is strict whenever adversarial neighborhoods overlap regions assigned to different
+classes.
+
+\subsection{Univariate Gaussian Model: Adversarial Bayes Classification}
+
+We illustrate the effect of adversarial perturbations on the Bayes-optimal
+classifier in a simple one-dimensional setting.  Consider a binary problem with
+equal class priors:
+\[
+X \mid Y=0 \sim \mathcal{N}(\mu_0,\sigma^2),
+\qquad
+X \mid Y=1 \sim \mathcal{N}(\mu_1,\sigma^2),
+\quad
+\mu_1 > \mu_0.
+\]
+For the benign (non-adversarial) problem, the Bayes classifier is
+\[
+h^{*}(x)
+=
+\begin{cases}
+1, & x > t_{\mathrm{ben}},\\[2mm]
+0, & x \le t_{\mathrm{ben}},
+\end{cases}
+\qquad
+t_{\mathrm{ben}}
+=
+\dfrac{\mu_0 + \mu_1}{2}.
+\]
+
+\paragraph{Adversarial perturbations.}
+Let the adversary act in the $\ell_\infty$ model on $\mathbb{R}$, that is,
+for each input $x$ the perturbation set is
+\[
+\mathcal{N}(x) = [x-\varepsilon,\, x+\varepsilon].
+\]
+For a candidate classifier $h$, the adversarial risk is
+\[
+L_{\mathcal{N}}(h)
+=
+\mathbb{E}_{(x,y)}
+\Big[
+    \sup_{x' \in [x-\varepsilon,\,x+\varepsilon]}
+    \mathbb{I}\big(h(x') \neq y\big)
+\Big].
+\]
+A point $x$ is robustly classified as class $1$ if \emph{all} perturbed points
+$x' \in [x-\varepsilon,x+\varepsilon]$ lie on the side of the threshold assigned
+to class $1$.  Consequently, a threshold classifier is robust for label $1$ at
+$x$ if and only if
+\[
+x - \varepsilon > t,
+\]
+where $t$ is the decision threshold of $h$.  Analogously, it is robust for
+label $0$ if and only if
+\[
+x + \varepsilon \le t.
+\]
+
+\paragraph{Bayes-optimal adversarial threshold.}
+Let $h_t(x)=\mathbb{I}[x>t]$ denote a threshold classifier.  Under the above
+robustness constraints, classification of label $1$ suffers adversarial error 
+on the event $\{X \le t+\varepsilon\}$, whereas classification of label $0$
+suffers adversarial error on the event $\{X \ge t-\varepsilon\}$.  Thus the
+adversarial risk of $h_t$ is
+\[
+L_{\mathcal{N}}(h_t)
+=
+\frac{1}{2}
+\Big(
+    \mathbb{P}(X \le t+\varepsilon \mid Y=1)
+    +
+    \mathbb{P}(X \ge t-\varepsilon \mid Y=0)
+\Big).
+\]
+Using the Gaussian CDF $\Phi$,
+\[
+L_{\mathcal{N}}(h_t)
+=
+\frac{1}{2}
+\Big(
+    \Phi\!\left(\frac{t+\varepsilon - \mu_1}{\sigma}\right)
+    +
+    1 - \Phi\!\left(\frac{t-\varepsilon - \mu_0}{\sigma}\right)
+\Big).
+\]
+
+\paragraph{Minimizing the adversarial risk.}
+Differentiating with respect to $t$ and setting the derivative to zero yields
+the optimal adversarial threshold:
+\[
+t_{\mathrm{adv}}
+=
+\frac{\mu_0 + \mu_1}{2}.
+\]
+Thus, in this symmetric Gaussian model, adversarial perturbations do \emph{not}
+shift the optimal decision boundary; instead, they increase the overlap of the
+effective class-conditional regions by expanding the misclassification events.
+
+\paragraph{Resulting adversarial Bayes risk.}
+Substituting $t_{\mathrm{adv}}$ into the adversarial risk expression gives
+\[
+L_{\mathcal{N}}(h_{\mathcal{N}}^{*})
+=
+\Phi\!\left(
+    \frac{\varepsilon - (\mu_1 - \mu_0)/2}{\sigma}
+\right),
+\]
+which exceeds the benign Bayes error
+\[
+L(h^*)
+=
+\Phi\!\left(
+    -\frac{\mu_1 - \mu_0}{2\sigma}
+\right).
+\]
+
+\paragraph{Interpretation.}
+Adversarial perturbations reduce the effective separation between the two
+Gaussian classes from $(\mu_1 - \mu_0)$ to $(\mu_1 - \mu_0 - 2\varepsilon)$.
+This contraction increases the Bayes-optimal error even though the optimal
+decision boundary remains unchanged.  The phenomenon illustrates a general
+principle: the minimal achievable adversarial risk is determined by intrinsic
+overlap between adversarial neighborhoods of the class distributions.
+
+
+\subsection{Neighborhood-induced overlap: toy example}
+
+Let $x$ and $x'$ be samples from different classes. If their adversarial neighborhoods satisfy
+\[
+\mathcal{N}(x) \cap \mathcal{N}(x') \neq \varnothing,
+\]
+then no classifier can assign robust labels to both points.  
+Thus, overlap of neighborhoods implies unavoidable adversarial misclassification.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\textwidth]{Images/toy_example.png}
+    \caption{
+        Left: disjoint neighborhoods allow robust separation.  
+        Right: intersecting neighborhoods force misclassification for at least one class,
+        imposing a positive minimal adversarial risk.}
+\end{figure}
+
+\subsection{Optimal adversarial loss: two-class distributions}
+
+For class-conditional distributions $P_0, P_1$ and adversary $\mathcal{N}$, the minimal possible
+adversarial risk over all measurable classifiers can be expressed as
+\[
+\inf_h L_{\mathcal{N}}(h)
+=
+\frac{1}{2}\big(1 - D_{\mathcal{N}}(P_0,P_1)\big),
+\]
+where $D_{\mathcal{N}}$ is an adversary-dependent divergence capturing the degree to which
+adversarial neighborhoods make the two distributions indistinguishable.
+
+This provides a fundamental lower bound: even optimal classifiers cannot achieve a risk below this
+value.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Images/optimal_adversarial_loss.png}
+    \caption{
+        Comparison of robust classifier loss and the theoretical minimum robust risk
+        determined solely by class distributions and adversarial neighborhoods.}
+\end{figure}
+
+\subsection{Optimal Transport View of Distribution-Induced Robustness Limits}
+
+Optimal adversarial risk reflects intrinsic geometric interactions between the
+class-conditional distributions under the perturbation model.  A convenient way
+to formalize this interaction is through an optimal-transport (OT) viewpoint,
+which measures how difficult it is for an adversary to make the two
+distributions indistinguishable by applying perturbations within
+$\mathcal{N}(x)$.
+
+\paragraph{Setup.}
+Let $P_0$ and $P_1$ denote the class-conditional distributions of $X$ given
+$Y=0$ and $Y=1$, respectively, and assume equal class priors.  For a measurable
+classifier $h : \mathcal{X} \to \{0,1\}$, the adversarial risk is
+\[
+L_{\mathcal{N}}(h)
+=
+\frac{1}{2}
+\mathbb{E}_{X\sim P_0}
+\!\left[
+    \sup_{x'\in \mathcal{N}(x)} \mathbb{I}(h(x') \neq 0)
+\right]
++
+\frac{1}{2}
+\mathbb{E}_{X\sim P_1}
+\!\left[
+    \sup_{x'\in \mathcal{N}(x)} \mathbb{I}(h(x') \neq 1)
+\right].
+\]
+The minimal achievable adversarial risk is
+\[
+L_{\mathcal{N}}^{*}
+=
+\inf_{h}
+L_{\mathcal{N}}(h),
+\]
+which depends only on $(P_0,P_1)$ and the perturbation structure
+$\mathcal{N}$.
+
+\paragraph{Adversarial indistinguishability.}
+For two points $x,x' \in \mathcal{X}$, define
+\[
+\Gamma_{\mathcal{N}}(x,x')
+=
+\begin{cases}
+1, & \mathcal{N}(x) \cap \mathcal{N}(x') = \varnothing,\\[1mm]
+0, & \text{otherwise}.
+\end{cases}
+\]
+This quantity records whether the adversary can map $x$ and $x'$ into a common
+region; if their neighborhoods intersect, then an adversary can make them
+locally indistinguishable to any classifier.
+
+\paragraph{Adversarial OT cost.}
+We define an OT-type cost function
+\[
+c_{\mathcal{N}}(x,x')
+=
+\Gamma_{\mathcal{N}}(x,x'),
+\]
+which penalizes pairs whose adversarial neighborhoods do \emph{not} overlap.
+The associated optimal-transport divergence between $P_0$ and $P_1$ is
+\[
+D_{\mathcal{N}}(P_0,P_1)
+=
+\inf_{\pi \in \Pi(P_0,P_1)}
+\int c_{\mathcal{N}}(x,x') \, d\pi(x,x'),
+\]
+where $\Pi(P_0,P_1)$ is the set of joint couplings with marginals
+$P_0$ and $P_1$.
+
+\paragraph{Interpretation.}
+The quantity $D_{\mathcal{N}}(P_0,P_1)$ measures the minimal mass of pairs
+$(x,x')$ that \emph{cannot} be made locally indistinguishable under adversarial
+perturbations.  A small value means that most of the mass of $P_0$ can be
+transported to $P_1$ through pairs whose neighborhoods intersect.  In such
+cases, no classifier can reliably distinguish the classes under adversarial
+perturbations.
+
+\paragraph{Connection to optimal adversarial risk.}
+For any measurable classifier $h$, one has the lower bound
+\[
+L_{\mathcal{N}}(h)
+\;\ge\;
+\frac{1}{2}
+\Big(1 - D_{\mathcal{N}}(P_0,P_1)\Big).
+\]
+Thus,
+\[
+L_{\mathcal{N}}^{*}
+\;\ge\;
+\frac{1}{2}
+\Big(1 - D_{\mathcal{N}}(P_0,P_1)\Big),
+\]
+which formalizes the intuition that adversarial robustness is limited whenever
+the perturbation model causes the class distributions to become locally
+intertwined.  The divergence $D_{\mathcal{N}}$ thereby captures an intrinsic,
+distribution-induced barrier to robust classification.  In particular, if
+$D_{\mathcal{N}}(P_0,P_1)=0$, then the adversary can fully align the supports
+of $P_0$ and $P_1$ under perturbations, making the classes robustly
+indistinguishable.
+
+\paragraph{Geometric special case.}
+When $\mathcal{N}(x)$ is an $\varepsilon$-ball under a metric $d$, one has
+\[
+\mathcal{N}(x) \cap \mathcal{N}(x') = \varnothing
+\quad\Longleftrightarrow\quad
+d(x,x') > 2\varepsilon.
+\]
+In this case,
+\[
+c_{\mathcal{N}}(x,x')
+=
+\mathbb{I}[\, d(x,x') > 2\varepsilon \,],
+\]
+and $D_{\mathcal{N}}$ quantifies the minimal transport mass that must cross a
+$2\varepsilon$-margin barrier separating the two distributions.
+
+\paragraph{Summary.}
+The OT formulation provides a principled method of quantifying the inherent
+adversarial overlap between class-conditional distributions.  Robust
+classification is achievable only when the induced neighborhoods of the
+distributions remain sufficiently separated relative to the adversary's
+allowable perturbations.
+
+
+% ----------------------------------------------------------------------
+\end{document}
