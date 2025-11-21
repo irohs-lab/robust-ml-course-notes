@@ -1,0 +1,478 @@
+% -----------------------------*- LaTeX -*------------------------------
+\documentclass[11pt]{report}
+\usepackage{scribe_ds603}
+\begin{document}
+
+\scribe{Gourish Garg}		% required
+\lecturenumber{19}			% required, must be a number
+\lecturedate{Nov 5}		% required, omit year
+
+\maketitle
+
+% ----------------------------------------------------------------------
+
+\section{Differential privacy}
+\subsection{Motivation}
+Neural networks often memorize unique examples during training. This makes models trained on sensitive user information such as medical records are vulnerable to information leakage. \cite{carlini}
+A trivial solution one might propose is to edit or remove identifying information from the training data so that specific indentifiers cannot be deduced. This approach is formally known as \emph{anonymization}. However, anonymization implicitly assumes the non-existence of any publicly available auxiliary dataset or model that could help re-identify identifiers. \cite{ohm} shows that even after anonymization, publicly available combinations of key attributes can uniquely identify individuals with high probability.
+
+Therefore, we need a more rigorous and provable notion of privacy.  
+Differential Privacy (DP) provides such a framework by ensuring that the influence of any single data point on the algorithm’s output is small, typically by adding a carefully calibrated random noise.
+
+\subsection{Intuition}
+
+We compare datasets that differ in exactly one data point. Let $D$ be a dataset and let $D' = D \cup \{x\}$ (or, more generally, any dataset obtained by adding or removing a single record from $D$). For a randomized training algorithm $\mathcal{A}$, we want the output distributions—i.e., the distributions over model parameters produced when training on $D$ versus $D'$—to remain close.
+
+A randomized algorithm is said to be $\epsilon$-differentially private if the addition or removal of one user's data does not significantly alter its output distribution. Informally, the algorithm “behaves almost the same” whether or not any single individual is included in the dataset, with the difference controlled by $\epsilon$.
+
+\subsection{Formalism}
+
+An algorithm $\mathcal{A}$ is $\epsilon$-differentially private if, for all neighboring
+datasets $D$ and $D'$ differing in exactly one entry, and for all measurable subsets
+$S$ of outputs,
+\[
+\Pr[\mathcal{A}(D) \in S] \;\le\; e^{\epsilon} \,\Pr[\mathcal{A}(D') \in S].
+\]
+
+Equivalently, the definition can be expressed as the ratio:
+\[
+\frac{\Pr[\mathcal{A}(D) \in S]}{\Pr[\mathcal{A}(D') \in S]}
+\;\le\;
+e^{\epsilon}.
+\]
+
+Taking natural logarithms (using that $\ln$ is monotone increasing), we obtain:
+\[
+\ln\!\bigl(\Pr[\mathcal{A}(D)\in S]\bigr)
+-
+\ln\!\bigl(\Pr[\mathcal{A}(D')\in S]\bigr)
+\;\le\;
+\epsilon.
+\]
+
+Thus, $\epsilon$ bounds the \emph{privacy loss}, defined as the 
+log-likelihood ratio between the output distributions of $\mathcal{A}$ on
+neighboring datasets. A smaller $\epsilon$ implies stronger privacy.
+
+\textbf{Sensitivity.}
+Let $f : \mathcal{D} \to \mathbb{R}^k$ be a function defined on datasets.
+The \emph{global sensitivity} of $f$ is defined as
+\[
+\Delta f
+\;=\;
+\max_{D,\,D'}
+\left\| f(D) - f(D') \right\|_1,
+\]
+where the maximum is taken over all \textbf{neighboring datasets} $D$ and $D'$, i.e., datasets that differ in exactly one individual's record.
+
+Intuitively, $\Delta f$ measures the maximum amount by which the value of $f$ can change when the data of a single person is added, removed, or modified.
+
+\textbf{Example.}
+Consider the function
+\[
+f(D) = \sum_{i=1}^n x_i,
+\qquad x_i \in [0, B].
+\]
+If $D$ and $D'$ are neighboring datasets, then only one value can differ between them, and that value can change by at most $B$.
+
+Therefore, the global sensitivity is
+\[
+\Delta f = B.
+\]
+
+
+\subsection{Example of a DP Algorithm}
+
+\paragraph{Laplace distribution (density).}
+The Laplace distribution with mean $\mu$ and scale $b>0$ has density
+\[
+\operatorname{Lap}(x;\mu,b)
+=
+\frac{1}{2b}\exp\!\Big(-\frac{|x-\mu|}{b}\Big),
+\qquad x\in\mathbb{R}.
+\]
+
+\paragraph{Setup.}
+Let $f(D)=\mathrm{COUNT}(D)$ be the counting query.  
+The global sensitivity of $f$ is $\Delta f = 1$, because neighboring
+datasets $D$ and $D'$ differ in only one record, and hence their counts
+differ by at most $1$.
+
+Define the Laplace mechanism with privacy parameter $\epsilon>0$ by
+\[
+\mathcal{A}(D)
+=
+f(D) + Z,
+\qquad Z \sim \operatorname{Lap}(0,b),
+\]
+where we choose the scale parameter $b=\Delta f/\epsilon = 1/\epsilon$.
+Thus the density of the released value $y\in\mathbb{R}$ is
+\[
+p_D(y)
+=
+\frac{1}{2b}\exp\!\Big(-\frac{|y-f(D)|}{b}\Big)
+=
+\frac{\epsilon}{2}\exp\!\bigl(-\epsilon\,|y-f(D)|\bigr).
+\]
+
+\paragraph{Theorem.}
+The mechanism $\mathcal{A}(D) = \mathrm{COUNT}(D) + \operatorname{Lap}(1/\epsilon)$
+is $\epsilon$-differentially private.
+
+\paragraph{Proof.}
+Let $D$ and $D'$ be any neighboring datasets. Since $\Delta f = 1$,
+we have $|f(D) - f(D')| \le 1$. For any output $y\in\mathbb{R}$,
+consider the ratio of densities:
+\[
+\frac{p_D(y)}{p_{D'}(y)}
+=
+\frac{\frac{\epsilon}{2}\exp\!\big(-\epsilon\,|y-f(D)|\big)}
+     {\frac{\epsilon}{2}\exp\!\big(-\epsilon\,|y-f(D')|\big)}
+=
+\exp\!\Bigl(\epsilon\bigl(|y-f(D')|-|y-f(D)|\bigr)\Bigr).
+\]
+
+Using the inequality $|a|-|b|\le|a-b|$, set  
+$a = y - f(D')$ and $b = y - f(D)$ to obtain
+\[
+|y-f(D')| - |y-f(D)|
+\;\le\;
+|f(D) - f(D')|
+\;\le\; 1.
+\]
+Thus for all $y$,
+\[
+\frac{p_D(y)}{p_{D'}(y)}
+\;\le\;
+\exp(\epsilon).
+\]
+
+Integrating over any measurable set $S \subseteq \mathbb{R}$ yields
+\[
+\Pr[\mathcal{A}(D)\in S]
+=
+\int_S p_D(y)\,dy
+\;\le\;
+\int_S e^{\epsilon}p_{D'}(y)\,dy
+=
+e^{\epsilon}\Pr[\mathcal{A}(D')\in S].
+\]
+This is exactly the definition of $\epsilon$-differential privacy. \hfill $\square$
+
+The deterministic mechanism $A_{\text{det}}(D)=\mathrm{COUNT}(D)$ is not
+differentially private.  
+For neighboring $D$ and $D'$ and the output $y=f(D)$, we have
+\[
+\Pr[A_{\text{det}}(D)=y] = 1
+\quad\text{but}\quad
+\Pr[A_{\text{det}}(D')=y] = 0,
+\]
+so the ratio of probabilities is infinite, violating any finite
+$e^{\epsilon}$ bound.  
+Adding Laplace noise smooths the output distribution so that the
+likelihood ratio is always bounded by $e^{\epsilon}$.
+
+\section{Composition}
+Every DP algorithm over a dataset is associated with a privacy cost. Multiple algorithms on same datset can reveal more information by accumulation.
+
+\begin{theorem}[Basic Composition]
+    
+Let \(\mathcal{A}_1\) be \(\varepsilon_1\)-DP and let \(\mathcal{A}_2\) be \(\varepsilon_2\)-DP even when \(\mathcal{A}_2\) may be chosen \emph{adaptively} based on the output of \(\mathcal{A}_1\).  
+Then the combined mechanism
+\[
+\mathcal{A}(D) \;=\; \big(\mathcal{A}_1(D),\; \mathcal{A}_2(D,\;\mathcal{A}_1(D))\big)
+\]
+is \((\varepsilon_1+\varepsilon_2)\)-differentially private.
+\end{theorem}
+
+\begin{proof}
+Fix any pair of neighboring datasets \(D,D'\) (differing in one record).  
+Let \(o_1,o_2\) be arbitrary possible outputs of \(\mathcal{A}_1,\mathcal{A}_2\) respectively.
+Write
+\[
+p_D(o_1,o_2)
+\;=\;
+\Pr\big[\mathcal{A}_1(D)=o_1,\ \mathcal{A}_2(D,o_1)=o_2\big].
+\]
+By the chain rule for probabilities,
+\[
+p_D(o_1,o_2)
+\;=\;
+\Pr[\mathcal{A}_1(D)=o_1]\cdot
+\Pr\big[\mathcal{A}_2(D,o_1)=o_2 \mid \mathcal{A}_1(D)=o_1\big].
+\]
+Similarly,
+\[
+p_{D'}(o_1,o_2)
+\;=\;
+\Pr[\mathcal{A}_1(D')=o_1]\cdot
+\Pr\big[\mathcal{A}_2(D',o_1)=o_2 \mid \mathcal{A}_1(D')=o_1\big].
+\]
+
+Because \(\mathcal{A}_1\) is \(\varepsilon_1\)-DP we have for every \(o_1\)
+\[
+\Pr[\mathcal{A}_1(D)=o_1] \le e^{\varepsilon_1}\Pr[\mathcal{A}_1(D')=o_1].
+\]
+By assumption \(\mathcal{A}_2\) is \(\varepsilon_2\)-DP even when it is chosen based on the transcript \(o_1\); therefore for every \(o_1,o_2\)
+\[
+\Pr\big[\mathcal{A}_2(D,o_1)=o_2 \mid \mathcal{A}_1(D)=o_1\big]
+\le e^{\varepsilon_2}\,
+\Pr\big[\mathcal{A}_2(D',o_1)=o_2 \mid \mathcal{A}_1(D')=o_1\big].
+\]
+Multiplying the two inequalities yields the pointwise bound
+\[
+p_D(o_1,o_2) \le e^{\varepsilon_1}e^{\varepsilon_2}\, p_{D'}(o_1,o_2)
+= e^{\varepsilon_1+\varepsilon_2}\, p_{D'}(o_1,o_2).
+\]
+
+Now let \(S\) be any measurable set of output pairs. Integrating (or summing)
+over \((o_1,o_2)\in S\) gives
+\[
+\Pr[\mathcal{A}(D)\in S]
+= \int_{S} p_D(o_1,o_2)\,d(o_1,o_2)
+\le \int_{S} e^{\varepsilon_1+\varepsilon_2}\, p_{D'}(o_1,o_2)\,d(o_1,o_2)
+= e^{\varepsilon_1+\varepsilon_2}\Pr[\mathcal{A}(D')\in S].
+\]
+This matches the definition of $(\varepsilon_1+\varepsilon_2)$-differential privacy.
+
+\section{Post processing}
+\begin{theorem}[Post-Processing]
+Let $\mathcal{A}$ be an $\varepsilon$-differentially private mechanism.
+Let $g$ be any (possibly randomized) function that does \emph{not}
+access the private dataset.  
+Define the mechanism
+\[
+\mathcal{B}(D) = g(\mathcal{A}(D)).
+\]
+Then $\mathcal{B}$ is also $\varepsilon$-differentially private.
+\end{theorem}
+
+\begin{proof}
+Fix neighboring datasets $D$ and $D'$ differing in one individual's data.
+Let $S$ be any measurable subset of outputs of $\mathcal{B}$.
+Then
+\[
+\Pr[\mathcal{B}(D) \in S]
+= \Pr[g(\mathcal{A}(D)) \in S]
+= \Pr[\mathcal{A}(D) \in g^{-1}(S)],
+\]
+where $g^{-1}(S)$ denotes the preimage of $S$ under $g$.
+
+Since $\mathcal{A}$ is $\varepsilon$-DP, we have
+\[
+\Pr[\mathcal{A}(D) \in g^{-1}(S)]
+\;\le\;
+e^{\varepsilon}\Pr[\mathcal{A}(D') \in g^{-1}(S)].
+\]
+
+Rewriting the term on the right-hand side,
+\[
+\Pr[\mathcal{A}(D') \in g^{-1}(S)]
+= \Pr[g(\mathcal{A}(D')) \in S]
+= \Pr[\mathcal{B}(D') \in S].
+\]
+
+Combining the inequalities gives
+\[
+\Pr[\mathcal{B}(D) \in S]
+\;\le\;
+e^{\varepsilon}
+\Pr[\mathcal{B}(D') \in S],
+\]
+which is exactly the definition of $\varepsilon$-differential privacy
+for $\mathcal{B}$. 
+\end{proof}
+
+\paragraph{Intuition.}
+Once the data has been passed through an $\varepsilon$-DP mechanism
+$\mathcal{A}$, its output cannot reveal much about any single individual.
+Any further computation $g$, only transforms that already-privacy-protected output.
+Since $g$ never uses the raw dataset, it cannot ``undo'' the DP noise or
+recover additional information about individuals.
+Hence post-processing cannot worsen privacy beyond $\varepsilon$.
+
+Therefore, after training an LLM on DP algorithm, any subsequent operation such as, alignment, SFT or distillation(applied only to the DP model) is merely a function of the already DP output.  
+
+\newpage
+\section{DP-SGD (Differentially Private Stochastic Gradient Descent)}
+
+DP-SGD is the differentially private version of stochastic gradient descent
+used for training deep learning models while protecting individual
+training examples.  
+Each iteration applies a DP mechanism to the gradients.
+
+\subsection*{Algorithm (One Iteration)}
+\begin{enumerate}
+    \item \textbf{Sample a minibatch} of training examples.
+    %
+    \item \textbf{Compute per-example gradients} 
+    \[
+        g_i = \nabla_\theta \ell(\theta; x_i)
+    \]
+    for each example \(x_i\) in the minibatch.
+    %
+    \item \textbf{Clip each gradient} to limit sensitivity:
+    \[
+        \tilde{g}_i 
+        = 
+        g_i \cdot 
+        \min\!\left(1,\; \frac{C}{\|g_i\|_2}\right),
+    \]
+    where \(C>0\) is the clipping threshold. Per-example gradient clipping ensures that one individual's gradient can
+influence the update by at most a bounded amount (i.e., bounded sensitivity).
+
+    %
+    \item \textbf{Add Gaussian noise} to the averaged clipped gradient:
+    \[
+        \bar{g}
+        =
+        \frac{1}{B}
+        \left(
+        \sum_{i=1}^B \tilde{g}_i
+        +
+        \mathcal{N}\!\left(0,\;\sigma^2 C^2 I\right)
+        \right).
+    \]
+    Adding Gaussian noise hides the bounded contribution.  
+
+    %
+    \item \textbf{Update model parameters}:
+    \[
+        \theta \leftarrow \theta - \eta \,\bar{g}.
+    \]
+\end{enumerate}
+Because every iteration applies a DP mechanism to the gradients, the full
+training process remains differentially private under the appropriate
+composition theorem.
+
+
+\section{Hypothesis testing}
+Suppose an observation $X$ is drawn from one of two distributions:
+\[
+X \sim P \quad\text{or}\quad X \sim Q,
+\]
+where $P$ and $Q$ have probability density functions $f_P$ and $f_Q$.
+The task is to decide which distribution generated $X$.
+
+This is a binary hypothesis test:
+\[
+H_0: X \sim P,
+\qquad
+H_1: X \sim Q.
+\]
+
+A decision rule is a function that maps the observed value $X$ to
+either ``guess $P$'' or ``guess $Q$''.
+
+\subsection*{Error Probabilities}
+
+Thw two types of errors that arise are:
+\begin{itemize}
+    \item \textbf{Type I Error} (False Positive):
+    guessing $Q$ when $X \sim P$.
+    \[
+    \alpha = \Pr_{X \sim P}(\text{guess } Q).
+    \]
+
+    \item \textbf{Type II Error} (False Negative):
+    guessing $P$ when $X \sim Q$.
+    \[
+    \beta = \Pr_{X \sim Q}(\text{guess } P).
+    \]
+\end{itemize}
+
+A good test attempts to make both $\alpha$ and $\beta$ as small as possible.
+However, reducing one usually increases the other.
+
+\subsection*{Likelihood Ratio and Log-Likelihood Ratio}
+
+A fundamental quantity for distinguishing $P$ and $Q$ is the
+likelihood ratio:
+\[
+\Lambda(X) = \frac{f_P(X)}{f_Q(X)}.
+\]
+
+Often one uses its logarithm, the \emph{log-likelihood ratio}:
+\[
+T(X) = \log \Lambda(X)
+    = \log\!\left( \frac{f_P(X)}{f_Q(X)} \right).
+\]
+
+The value of $T(X)$ indicates whether $X$ is more likely under $P$ or $Q$.
+
+\subsection*{Neyman--Pearson Lemma}
+
+The Neyman--Pearson lemma characterizes the optimal test for deciding
+between two simple hypotheses $P$ and $Q$.
+
+\begin{theorem}[Neyman--Pearson]
+Fix a Type I error constraint $\alpha \in [0,1]$.
+Among all tests with
+\[
+\Pr_{X \sim P}(\text{reject } H_0) \le \alpha,
+\]
+the test that minimizes $\beta$ (Type II error) is the
+\emph{likelihood ratio test}, which has the form:
+\[
+\text{Reject } H_0 \text{ (i.e.\ guess } Q)
+\quad \text{if and only if} \quad
+T(X) = \log\!\left(\frac{f_P(X)}{f_Q(X)}\right) < t,
+\]
+for some threshold $t \in \mathbb{R}$ chosen to achieve the desired
+Type I error level.
+No other test can achieve a strictly smaller Type II error
+without increasing the Type I error.
+\end{theorem}
+
+\subsection*{Interpretation}
+
+The test compares how likely the observation $X$ is under $P$ versus $Q$:
+\[
+\Lambda(X) = \frac{f_P(X)}{f_Q(X)}.
+\]
+
+\begin{itemize}
+    \item If $\Lambda(X)$ is large (or $T(X)$ is large),
+    then $X$ looks more like it came from $P$.
+    \item If $\Lambda(X)$ is small (or $T(X)$ is small),
+    then $X$ looks more like it came from $Q$.
+\end{itemize}
+
+Thus the optimal test has the form:
+\[
+\text{Guess } 
+\begin{cases}
+P, & \text{if } T(X) \ge t,\\[4pt]
+Q, & \text{if } T(X) < t.
+\end{cases}
+\]
+
+\subsection*{Optimality Insight}
+
+The lemma states that:
+\begin{itemize}
+    \item Among all tests that keep the probability of rejecting $H_0$ under $P$
+          below $\alpha$, the likelihood ratio test has the smallest possible
+          Type II error $\beta$.
+    \item No alternative decision rule can lower both $\alpha$ \emph{and} $\beta$
+          simultaneously.
+\end{itemize}
+
+Thus the likelihood ratio test is the unique boundary of optimality
+for hypothesis testing between two fixed distributions.
+
+\paragraph{Geometric Intuition.}
+Graphically, the optimal decision boundary corresponds to a point where the
+densities $f_P$ and $f_Q$ intersect when scaled appropriately.
+Everything to one side is ``more $P$-like'' and everything to the other is
+``more $Q$-like''.
+This boundary minimizes the area of overlap responsible for both error types.
+
+
+\section{Advanced DP}
+Check \cite{thomas} for advanced DP composition, tighter accounting than naive $\epsilon$-summing.
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
